@@ -7,6 +7,7 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
 import 'report_details_page.dart'; // Import the report details page
 
@@ -192,8 +193,17 @@ class _RaiseGrievancePageState extends State<RaiseGrievancePage> {
     final loc = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.raiseGrievance),
         backgroundColor: Colors.redAccent,
+        elevation: 0,
+        centerTitle: true,
+        title: Text(
+          loc.raiseGrievance,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 17.sp,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.w),
@@ -225,97 +235,245 @@ class _RaiseGrievancePageState extends State<RaiseGrievancePage> {
               // --- Photo Upload Section ---
               Text(
                 loc.photos,
-                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),
               ),
-              SizedBox(height: 12.h),
-              Wrap(
-                spacing: 10.w,
-                runSpacing: 10.h,
-                children: [
-                  ..._photos.map(
-                    (photo) => SizedBox(
-                      width: 80.w,
-                      height: 80.h,
-                      child: Image.file(photo, fit: BoxFit.cover),
-                    ),
-                  ),
-                  if (_photos.length < 3)
-                    GestureDetector(
-                      onTap: _pickImage,
-                      child: Container(
-                        width: 80.w,
-                        height: 80.h,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(8.r),
+              SizedBox(height: 8.h),
+              SizedBox(
+                height: 90.h,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: 1,
+                  separatorBuilder: (_, __) => SizedBox(width: 10.w),
+                  itemBuilder: (context, i) {
+                    if (_photos.isNotEmpty) {
+                      final photo = _photos.first;
+                      final photoTimestamp = File(
+                        photo.path,
+                      ).lastModifiedSync();
+                      return GestureDetector(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => Dialog(
+                              backgroundColor: Colors.black,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Image.file(photo),
+                                  Padding(
+                                    padding: EdgeInsets.all(8.w),
+                                    child: Text(
+                                      DateFormat(
+                                        'dd MMM yyyy, hh:mm a',
+                                      ).format(photoTimestamp),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15.sp,
+                                      ),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                    child: Text(
+                                      AppLocalizations.of(context)!.close,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14.sp,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12.r),
+                              child: Image.file(
+                                photo,
+                                width: 90.w,
+                                height: 90.w,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 2.h,
+                              left: 2.w,
+                              child: Container(
+                                color: Colors.black54,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 4.w,
+                                  vertical: 2.h,
+                                ),
+                                child: Text(
+                                  DateFormat(
+                                    'dd MMM, hh:mm a',
+                                  ).format(photoTimestamp),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10.sp,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 2.h,
+                              right: 2.w,
+                              child: GestureDetector(
+                                onTap: () => setState(() => _photos.clear()),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 18.sp,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        child: Icon(
-                          Icons.add_a_photo,
-                          color: Colors.grey.shade600,
+                      );
+                    } else {
+                      return GestureDetector(
+                        onTap: _pickImage,
+                        child: Container(
+                          width: 90.w,
+                          height: 90.w,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(12.r),
+                            color: Colors.grey.shade100,
+                          ),
+                          child: Icon(
+                            Icons.camera_alt,
+                            color: Colors.grey,
+                            size: 32.sp,
+                          ),
                         ),
-                      ),
-                    ),
-                ],
+                      );
+                    }
+                  },
+                ),
               ),
+              SizedBox(height: 6.h),
+
               SizedBox(height: 20.h),
 
               // --- Voice Note Section ---
               Text(
                 loc.recordVoiceNote,
-                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),
               ),
-              SizedBox(height: 12.h),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (_isRecording)
-                      Text(
-                        loc.recording,
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    if (!_isRecording && _audioPath == null)
-                      Text(loc.addNotesHint),
-                    if (!_isRecording && _audioPath != null)
-                      Text(loc.voiceNoteRecorded),
-                    if (_isRecording)
-                      IconButton(
-                        icon: Icon(Icons.stop, color: Colors.red),
-                        onPressed: _stopRecording,
-                      ),
-                    if (!_isRecording && _audioPath == null)
-                      IconButton(
-                        icon: Icon(Icons.mic, color: Colors.blue),
-                        onPressed: _startRecording,
-                      ),
-                    if (!_isRecording && _audioPath != null)
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              _isPlaying ? Icons.pause : Icons.play_arrow,
-                              color: Colors.blue,
+              SizedBox(height: 8.h),
+              Row(
+                children: [
+                  Icon(Icons.mic, color: Colors.grey, size: 20.sp),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: _isRecording
+                        ? Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  loc.recording,
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14.sp,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              SizedBox(
+                                width: 18.w,
+                                height: 18.w,
+                                child: CircularProgressIndicator(
+                                  color: Colors.red,
+                                  strokeWidth: 3,
+                                ),
+                              ),
+                            ],
+                          )
+                        : _isPlaying
+                        ? Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  loc.playing,
+                                  style: TextStyle(
+                                    color: Colors.redAccent,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14.sp,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              SizedBox(
+                                width: 18.w,
+                                height: 18.w,
+                                child: CircularProgressIndicator(
+                                  color: Colors.redAccent,
+                                  strokeWidth: 3,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            _audioPath == null
+                                ? loc.recordVoiceNote
+                                : loc.voiceNoteRecorded,
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontSize: 13.sp,
                             ),
-                            onPressed: _isPlaying ? _stopAudio : _playAudio,
                           ),
-                          IconButton(
-                            icon: Icon(Icons.delete, color: Colors.red),
-                            onPressed: _deleteVoiceNote,
-                          ),
-                        ],
+                  ),
+                  if (!_isRecording && _audioPath == null)
+                    IconButton(
+                      icon: Icon(
+                        Icons.mic,
+                        color: Colors.redAccent,
+                        size: 22.sp,
                       ),
-                  ],
-                ),
+                      onPressed: _startRecording,
+                    ),
+                  if (_isRecording)
+                    IconButton(
+                      icon: Icon(Icons.stop, color: Colors.red, size: 22.sp),
+                      onPressed: _stopRecording,
+                    ),
+                  if (!_isRecording && _audioPath != null)
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            _isPlaying ? Icons.pause : Icons.play_arrow,
+                            color: Colors.redAccent,
+                            size: 22.sp,
+                          ),
+                          onPressed: _isPlaying ? _stopAudio : _playAudio,
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            Icons.delete,
+                            color: Colors.red,
+                            size: 22.sp,
+                          ),
+                          onPressed: _deleteVoiceNote,
+                          tooltip: loc.deleteVoiceNote,
+                        ),
+                      ],
+                    ),
+                ],
               ),
-              SizedBox(height: 30.h),
+              SizedBox(height: 28.h),
 
               // --- Submit Button ---
               ElevatedButton(
@@ -326,15 +484,30 @@ class _RaiseGrievancePageState extends State<RaiseGrievancePage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.r),
                   ),
+                  foregroundColor: Colors.white,
+                  textStyle: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
                 child: _isSubmitting
                     ? CircularProgressIndicator(color: Colors.white)
-                    : Text(
-                        loc.submit,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.send, color: Colors.white, size: 20.sp),
+                          SizedBox(width: 8.w),
+                          Text(
+                            loc.submit,
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
               ),
             ],
