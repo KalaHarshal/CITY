@@ -251,8 +251,9 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
       );
     }
 
-    final photos = (complaintData!['photos'] as List<dynamic>? ?? []);
     final voiceNoteUrl = complaintData!['voiceNote'];
+    // Media Submitted (photos & videos)
+    final mediaList = (complaintData!['media'] as List<dynamic>? ?? []);
 
     return Scaffold(
       backgroundColor: ReportDetailsPage.bgGrey,
@@ -402,9 +403,6 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
                 ),
               ),
 
-              // Media Submitted (photos & videos)
-              final mediaList = (complaintData!['media'] as List<dynamic>? ?? []);
-
               if (mediaList.isNotEmpty)
                 Container(
                   width: double.infinity,
@@ -441,7 +439,9 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
                             if (timestamp != null) {
                               try {
                                 final dt = DateTime.parse(timestamp);
-                                timeLabel = DateFormat('dd MMM, hh:mm a').format(dt);
+                                timeLabel = DateFormat(
+                                  'dd MMM, hh:mm a',
+                                ).format(dt);
                               } catch (_) {
                                 timeLabel = timestamp;
                               }
@@ -453,7 +453,10 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
                                     context: context,
                                     builder: (_) => Dialog(
                                       backgroundColor: Colors.black,
-                                      child: _VideoPreviewDialog(url: url, timestamp: timeLabel),
+                                      child: _VideoPreviewDialog(
+                                        url: url,
+                                        timestamp: timeLabel,
+                                      ),
                                     ),
                                   );
                                 } else {
@@ -464,19 +467,30 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Image.network(url, width: 300.w, fit: BoxFit.contain),
+                                          Image.network(
+                                            url,
+                                            width: 300.w,
+                                            fit: BoxFit.contain,
+                                          ),
                                           Padding(
                                             padding: EdgeInsets.all(8.w),
                                             child: Text(
                                               timeLabel,
-                                              style: TextStyle(color: Colors.white, fontSize: 15.sp),
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 15.sp,
+                                              ),
                                             ),
                                           ),
                                           TextButton(
-                                            onPressed: () => Navigator.of(context).pop(),
+                                            onPressed: () =>
+                                                Navigator.of(context).pop(),
                                             child: Text(
                                               loc.close,
-                                              style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 14.sp,
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -495,7 +509,11 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
                                             height: 90.w,
                                             color: Colors.black12,
                                             child: Center(
-                                              child: Icon(Icons.videocam, color: Colors.red, size: 40.sp),
+                                              child: Icon(
+                                                Icons.videocam,
+                                                color: Colors.red,
+                                                size: 40.sp,
+                                              ),
                                             ),
                                           )
                                         : Image.network(
@@ -510,10 +528,16 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
                                     left: 2.w,
                                     child: Container(
                                       color: Colors.black54,
-                                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 4.w,
+                                        vertical: 2.h,
+                                      ),
                                       child: Text(
                                         timeLabel,
-                                        style: TextStyle(color: Colors.white, fontSize: 10.sp),
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10.sp,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -1016,9 +1040,7 @@ class _VideoPreviewDialogState extends State<_VideoPreviewDialog> {
               ? VideoPlayer(_controller)
               : Container(
                   color: Colors.black,
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  child: Center(child: CircularProgressIndicator()),
                 ),
         ),
         Padding(
