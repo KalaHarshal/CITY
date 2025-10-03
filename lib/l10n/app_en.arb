@@ -312,6 +312,18 @@
   "faqQ4": "What do the different complaint statuses mean?",
   "faqA4": "Pending: Waiting for review.\nAssigned: Assigned to a worker.\nIn Progress: Work has started.\nResolved: Issue has been fixed.",
   "faqQ5": "How do I raise a grievance if my complaint is not resolved?",
-  "faqA5": "Open the complaint details and tap 'Raise Grievance' at the bottom."
-
+  "faqA5": "Open the complaint details and tap 'Raise Grievance' at the bottom.",
+  "grievanceRaised": "Grievance Raised",
+  "grievanceReports": "Grievance Reports",
+  "noGrievancesFound": "No pending grievances found.",
+  "complaint": "Complaint",
+  "category": "Category",
+  "grievanceReason": "Reason for Grievance",
+  "notAvailable": "N/A",
+  "grievanceHint": "Explain why you are not satisfied with the resolution.",
+  "reasonRequired": "Reason cannot be empty.",
+  "grievanceSubmittedSuccess": "Grievance submitted successfully.",
+  "grievanceRaised": "Grievance Raised"
 }
+
+  

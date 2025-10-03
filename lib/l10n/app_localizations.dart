@@ -1195,7 +1195,7 @@ abstract class AppLocalizations {
   /// No description provided for @notAvailable.
   ///
   /// In en, this message translates to:
-  /// **'Not available'**
+  /// **'N/A'**
   String get notAvailable;
 
   /// No description provided for @worker.
@@ -1515,6 +1515,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open the complaint details and tap \'Raise Grievance\' at the bottom.'**
   String get faqA5;
+
+  /// No description provided for @grievanceRaised.
+  ///
+  /// In en, this message translates to:
+  /// **'Grievance Raised'**
+  String get grievanceRaised;
+
+  /// No description provided for @grievanceReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Grievance Reports'**
+  String get grievanceReports;
+
+  /// No description provided for @noGrievancesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending grievances found.'**
+  String get noGrievancesFound;
+
+  /// No description provided for @complaint.
+  ///
+  /// In en, this message translates to:
+  /// **'Complaint'**
+  String get complaint;
+
+  /// No description provided for @category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// No description provided for @grievanceReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for Grievance'**
+  String get grievanceReason;
+
+  /// No description provided for @grievanceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain why you are not satisfied with the resolution.'**
+  String get grievanceHint;
+
+  /// No description provided for @reasonRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason cannot be empty.'**
+  String get reasonRequired;
+
+  /// No description provided for @grievanceSubmittedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Grievance submitted successfully.'**
+  String get grievanceSubmittedSuccess;
 }
 
 class _AppLocalizationsDelegate

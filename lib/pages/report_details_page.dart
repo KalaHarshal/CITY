@@ -1,6 +1,4 @@
-import 'package:CiTY/models/report_model.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -8,6 +6,7 @@ import 'reports_page.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../l10n/app_localizations.dart';
 import 'package:video_player/video_player.dart';
+import 'raise_grievance_page.dart';
 
 // Icon selection based on complaint category
 IconData getCategoryIcon(String category) {
@@ -29,7 +28,7 @@ IconData getCategoryIcon(String category) {
 
 // Voice note player widget
 class VoiceNotePlayer extends StatefulWidget {
-  final String url; // Changed from path to url
+  final String url;
   const VoiceNotePlayer({super.key, required this.url});
 
   @override
@@ -39,14 +38,10 @@ class VoiceNotePlayer extends StatefulWidget {
 class _VoiceNotePlayerState extends State<VoiceNotePlayer> {
   final AudioPlayer _player = AudioPlayer();
   bool _isPlaying = false;
-  Duration _duration = Duration.zero;
-  Duration _position = Duration.zero;
 
   @override
   void initState() {
     super.initState();
-    _player.onDurationChanged.listen((d) => setState(() => _duration = d));
-    _player.onPositionChanged.listen((p) => setState(() => _position = p));
     _player.onPlayerComplete.listen((_) => setState(() => _isPlaying = false));
   }
 
@@ -59,34 +54,28 @@ class _VoiceNotePlayerState extends State<VoiceNotePlayer> {
   void _togglePlay() async {
     if (_isPlaying) {
       await _player.pause();
+      setState(() => _isPlaying = false);
     } else {
-      // ✅ Use UrlSource for Firebase URLs
       await _player.play(UrlSource(widget.url));
+      setState(() => _isPlaying = true);
     }
-    setState(() => _isPlaying = !_isPlaying);
   }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final currentLocale = Localizations.localeOf(context).languageCode;
-    final bool isNonLatinScript =
-        (currentLocale == 'sat' || currentLocale == 'hi');
-
     return ElevatedButton.icon(
       icon: Icon(
         _isPlaying ? Icons.pause : Icons.play_arrow,
         color: Colors.blue,
-        size: 20.sp, // Slightly smaller icon
+        size: 20.sp,
       ),
       label: Text(
         _isPlaying ? loc.pauseVoiceNote : loc.playVoiceNote,
         style: TextStyle(
           color: Colors.blue,
           fontWeight: FontWeight.bold,
-          fontSize: isNonLatinScript
-              ? 12.sp
-              : 14.sp, // Smaller font for Hindi/Santali
+          fontSize: 14.sp,
         ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
@@ -94,10 +83,7 @@ class _VoiceNotePlayerState extends State<VoiceNotePlayer> {
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.blue.withOpacity(0.08),
         elevation: 0,
-        padding: EdgeInsets.symmetric(
-          horizontal: 10.w,
-          vertical: 8.h,
-        ), // Reduced horizontal padding
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
       ),
       onPressed: _togglePlay,
@@ -110,150 +96,90 @@ class ReportDetailsPage extends StatefulWidget {
   const ReportDetailsPage({super.key, required this.complaintId});
 
   static const mainBlue = Color(0xFF1746D1);
-  static const navBg = Color(0xFFF0F4FF);
-  static const bgGrey = Color(0xFFF6F6F6); // Add this for home page grey
+  static const bgGrey = Color(0xFFF6F6F6);
 
   @override
   State<ReportDetailsPage> createState() => _ReportDetailsPageState();
 }
 
 class _ReportDetailsPageState extends State<ReportDetailsPage> {
-  Map<String, dynamic>? complaintData;
-  bool _loading = true;
-  String formattedDate = '';
-  String formattedTime = '';
-  String effectiveStatus = 'Pending';
+  Map<String, dynamic>? _reportData;
+  bool _isLoading = true;
+  bool _isGrievanceButtonEnabled = false;
 
   @override
   void initState() {
     super.initState();
-    _loadComplaint();
+    _fetchReportDetails();
   }
 
-  Future<void> _loadComplaint() async {
-    // First, try to load from Hive cache for instant display
-    final box = Hive.box<Report>('reportsBox');
-    final cachedReport = box.get(widget.complaintId);
-    if (cachedReport != null) {
-      // Use cached data to build a temporary map for display
-      setState(() {
-        complaintData = {
-          'complaintId': cachedReport.complaintId,
-          'category': cachedReport.title.split(' - ')[0],
-          'subcategory': cachedReport.title.split(' - ')[1],
-          'status': cachedReport.status,
-          // We need to fetch the rest from Firebase
-        };
-        effectiveStatus = cachedReport.status;
-        _loading = false; // Stop loading, show cached data
-      });
+  Future<void> _fetchReportDetails() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      final snapshot = await FirebaseDatabase.instance
+          .ref()
+          .child('complaints')
+          .child(widget.complaintId)
+          .get();
+
+      if (snapshot.exists && snapshot.value != null) {
+        final data = Map<String, dynamic>.from(snapshot.value as Map);
+        if (mounted) {
+          setState(() {
+            _reportData = data;
+            _isGrievanceButtonEnabled = _shouldShowGrievanceButton(data);
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
     }
-    // Always fetch from Firebase for the latest details
-    await _fetchComplaintFromFirebase();
   }
 
-  Future<void> _fetchComplaintFromFirebase() async {
-    final dbRef = FirebaseDatabase.instance.ref();
-    final snapshot = await dbRef
-        .child('complaints')
-        .child(widget.complaintId)
-        .get();
-    if (snapshot.exists) {
-      final data = Map<String, dynamic>.from(snapshot.value as Map);
+  bool _shouldShowGrievanceButton(Map<String, dynamic> data) {
+    final status = data['status'] as String?;
+    final submissionDateStr = data['dateTime'] as String?;
+    final hasGrievance = data['grievance'] != null;
 
-      // Always use the status from the global complaint data
-      String status = data['status'] ?? 'Pending';
+    if (hasGrievance) return false;
+    if (status == 'Resolved') return true;
 
-      DateTime? dt = DateTime.tryParse(data['dateTime'] ?? '');
-      if (dt != null) {
-        formattedDate = DateFormat('dd MMM yyyy').format(dt);
-        formattedTime = DateFormat('hh:mm a').format(dt);
-      }
-
-      if (mounted) {
-        setState(() {
-          complaintData = data;
-          effectiveStatus = status; // Always use status from global node
-          _loading = false;
-        });
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          _loading = false;
-        });
+    if (submissionDateStr != null &&
+        (status == 'Pending' || status == 'In Progress')) {
+      final submissionDate = DateTime.tryParse(submissionDateStr);
+      if (submissionDate != null &&
+          DateTime.now().difference(submissionDate).inDays > 7) {
+        return true;
       }
     }
-  }
-
-  // ✅ Helper to get status color
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case "Pending":
-        return const Color(0xFFB26A00); // Dark Orange
-      case "Assigned":
-        return Colors.purple;
-      case "In Progress":
-        return Colors.blue;
-      case "Resolved":
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  // ✅ Helper to get status background color
-  Color _getStatusBgColor(String status) {
-    switch (status) {
-      case "Pending":
-        return const Color(0xFFFFF6E0); // Light Orange
-      case "Assigned":
-        return Colors.purple.withOpacity(0.1);
-      case "In Progress":
-        return Colors.blue.withOpacity(0.1);
-      case "Resolved":
-        return Colors.green.withOpacity(0.1);
-      default:
-        return Colors.grey.withOpacity(0.1);
-    }
-  }
-
-  String _getStatusLabel(String status, AppLocalizations loc) {
-    switch (status) {
-      case "Pending":
-        return loc.pending;
-      case "Assigned":
-        return loc.assigned;
-      case "In Progress":
-        return loc.inProgress;
-      case "Resolved":
-        return loc.resolved;
-      default:
-        return status;
-    }
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final width = MediaQuery.of(context).size.width;
 
-    if (_loading) {
+    if (_isLoading) {
       return Scaffold(
         backgroundColor: ReportDetailsPage.bgGrey,
-        body: Center(child: CircularProgressIndicator()),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
-    if (complaintData == null) {
+    if (_reportData == null) {
       return Scaffold(
         backgroundColor: ReportDetailsPage.bgGrey,
+        appBar: AppBar(title: Text(loc.reportDetails)),
         body: Center(child: Text(loc.complaintNotFound)),
       );
     }
 
-    final voiceNoteUrl = complaintData!['voiceNote'];
-    // Media Submitted (photos & videos)
-    final mediaList = (complaintData!['media'] as List<dynamic>? ?? []);
+    final voiceNoteUrl = _reportData!['voiceNote'];
+    final mediaList = (_reportData!['media'] as List<dynamic>? ?? []);
+    final grievanceData = _reportData!['grievance'] as Map<dynamic, dynamic>?;
 
     return Scaffold(
       backgroundColor: ReportDetailsPage.bgGrey,
@@ -262,12 +188,10 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white, size: 24.sp),
-          onPressed: () {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => MyReportsPage()),
-              (route) => false,
-            );
-          },
+          onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const MyReportsPage()),
+            (route) => false,
+          ),
         ),
         title: Text(
           loc.reportDetails,
@@ -280,7 +204,7 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
         centerTitle: true,
       ),
       body: RefreshIndicator(
-        onRefresh: _fetchComplaintFromFirebase,
+        onRefresh: _fetchReportDetails,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
@@ -288,494 +212,41 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Top Card
-              Container(
-                width: double.infinity,
-                margin: EdgeInsets.only(bottom: 14.h),
-                padding: EdgeInsets.all(16.w),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: Colors.grey.shade200),
-                  borderRadius: BorderRadius.circular(14.r),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: ReportDetailsPage.mainBlue.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          padding: EdgeInsets.all(8.w),
-                          child: Icon(
-                            getCategoryIcon(complaintData!['category'] ?? ''),
-                            color: ReportDetailsPage.mainBlue,
-                            size: 28.sp,
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "${complaintData!['category'] ?? ''} - ${complaintData!['subcategory'] ?? ''}",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16.sp,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                "$formattedDate, $formattedTime",
-                                style: TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 13.sp,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10.h),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on,
-                          color: ReportDetailsPage.mainBlue,
-                          size: 18.sp,
-                        ),
-                        SizedBox(width: 4.w),
-                        Expanded(
-                          child: Text(
-                            complaintData!['location'] ?? '',
-                            style: TextStyle(
-                              color: Colors.black87,
-                              fontSize: 14.sp,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 6.h),
-                    Row(
-                      children: [
-                        Icon(Icons.tag, color: Colors.grey, size: 18.sp),
-                        SizedBox(width: 4.w),
-                        Expanded(
-                          // Add this to allow text to wrap if needed
-                          child: Text(
-                            loc.refId(complaintData!['complaintId'] ?? ''),
-                            //loc.refId("", complaintData!['complaintId'] ?? ''),
-                            style: TextStyle(
-                              color: Colors.black54,
-                              fontSize: 13.sp,
-                            ),
-                            maxLines: 2, // Allow two lines
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        SizedBox(width: 8.w), // Add space before the chip
-                        // ✅ DYNAMIC STATUS CHIP
-                        Chip(
-                          label: Text(
-                            _getStatusLabel(effectiveStatus, loc),
-                            style: TextStyle(
-                              color: _getStatusColor(effectiveStatus.trim()),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13.sp,
-                            ),
-                          ),
-                          backgroundColor: _getStatusBgColor(
-                            effectiveStatus.trim(),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10.w,
-                            vertical: 0.h,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+              _buildTopCard(loc),
 
+              // Submitted Media
               if (mediaList.isNotEmpty)
-                Container(
-                  width: double.infinity,
-                  margin: EdgeInsets.only(bottom: 14.h),
-                  padding: EdgeInsets.all(14.w),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: Colors.grey.shade200),
-                    borderRadius: BorderRadius.circular(14.r),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        loc.photosSubmitted,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15.sp,
-                        ),
-                      ),
-                      SizedBox(height: 10.h),
-                      SizedBox(
-                        height: 90.h,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: mediaList.length,
-                          separatorBuilder: (_, __) => SizedBox(width: 10.w),
-                          itemBuilder: (context, i) {
-                            final media = mediaList[i] as Map;
-                            final isVideo = media['type'] == 'video';
-                            final url = media['url'] as String;
-                            final timestamp = media['timestamp'] as String?;
-                            String timeLabel = '';
-                            if (timestamp != null) {
-                              try {
-                                final dt = DateTime.parse(timestamp);
-                                timeLabel = DateFormat(
-                                  'dd MMM, hh:mm a',
-                                ).format(dt);
-                              } catch (_) {
-                                timeLabel = timestamp;
-                              }
-                            }
-                            return GestureDetector(
-                              onTap: () {
-                                if (isVideo) {
-                                  showDialog(
-                                    context: context,
-                                    builder: (_) => Dialog(
-                                      backgroundColor: Colors.black,
-                                      child: _VideoPreviewDialog(
-                                        url: url,
-                                        timestamp: timeLabel,
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  showDialog(
-                                    context: context,
-                                    builder: (_) => Dialog(
-                                      backgroundColor: Colors.black,
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Image.network(
-                                            url,
-                                            width: 300.w,
-                                            fit: BoxFit.contain,
-                                          ),
-                                          Padding(
-                                            padding: EdgeInsets.all(8.w),
-                                            child: Text(
-                                              timeLabel,
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 15.sp,
-                                              ),
-                                            ),
-                                          ),
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.of(context).pop(),
-                                            child: Text(
-                                              loc.close,
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 14.sp,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                              child: Stack(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    child: isVideo
-                                        ? Container(
-                                            width: 90.w,
-                                            height: 90.w,
-                                            color: Colors.black12,
-                                            child: Center(
-                                              child: Icon(
-                                                Icons.videocam,
-                                                color: Colors.red,
-                                                size: 40.sp,
-                                              ),
-                                            ),
-                                          )
-                                        : Image.network(
-                                            url,
-                                            width: 90.w,
-                                            height: 90.w,
-                                            fit: BoxFit.cover,
-                                          ),
-                                  ),
-                                  Positioned(
-                                    bottom: 2.h,
-                                    left: 2.w,
-                                    child: Container(
-                                      color: Colors.black54,
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 4.w,
-                                        vertical: 2.h,
-                                      ),
-                                      child: Text(
-                                        timeLabel,
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10.sp,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildMediaCard(loc, 'photosSubmitted', mediaList),
 
               // Issue Description & Voice Note
-              Container(
-                width: double.infinity,
-                margin: EdgeInsets.only(bottom: 14.h),
-                padding: EdgeInsets.all(14.w),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: Colors.grey.shade200),
-                  borderRadius: BorderRadius.circular(14.r),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      loc.issueDescription,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15.sp,
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      complaintData!['description'] ?? '',
-                      style: TextStyle(fontSize: 14.sp, color: Colors.black87),
-                    ),
-                    if (voiceNoteUrl != null && voiceNoteUrl != "") ...[
-                      SizedBox(height: 12.h),
-                      // ✅ Pass URL to the player
-                      VoiceNotePlayer(url: voiceNoteUrl),
-                    ],
-                  ],
-                ),
+              _buildDescriptionCard(
+                loc,
+                'issueDescription',
+                _reportData!['description'],
+                voiceNoteUrl,
               ),
 
               // Status Timeline
-              Container(
-                width: double.infinity,
-                margin: EdgeInsets.only(bottom: 14.h),
-                padding: EdgeInsets.all(14.w),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: Colors.grey.shade200),
-                  borderRadius: BorderRadius.circular(14.r),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      loc.statusTimeline,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15.sp,
-                      ),
-                    ),
-                    SizedBox(height: 12.h),
-                    _buildStatusTimeline(),
-                  ],
-                ),
-              ),
+              _buildTimelineCard(loc),
 
-              if (complaintData!['status'] == 'Resolved')
-                Container(
-                  width: double.infinity,
-                  margin: EdgeInsets.only(bottom: 14.h),
-                  padding: EdgeInsets.all(14.w),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: Colors.grey.shade200),
-                    borderRadius: BorderRadius.circular(14.r),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Resolution Details',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15.sp,
-                          color: Colors.black,
-                        ),
-                      ),
-                      SizedBox(height: 14.h),
-                      if (complaintData!['completionPhotos'] != null &&
-                          (complaintData!['completionPhotos'] as List)
-                              .isNotEmpty)
-                        SizedBox(
-                          height: 90.h,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount:
-                                (complaintData!['completionPhotos'] as List)
-                                    .length,
-                            separatorBuilder: (_, __) => SizedBox(width: 10.w),
-                            itemBuilder: (context, i) {
-                              final photoUrl =
-                                  (complaintData!['completionPhotos']
-                                      as List)[i];
-                              final completionTimestamp =
-                                  complaintData!['completionTimestamp'];
-                              String timeLabel = '';
-                              if (completionTimestamp != null &&
-                                  completionTimestamp is String) {
-                                try {
-                                  final dt = DateTime.parse(
-                                    completionTimestamp,
-                                  );
-                                  timeLabel = DateFormat(
-                                    'dd MMM, hh:mm a',
-                                  ).format(dt);
-                                } catch (_) {
-                                  timeLabel = '';
-                                }
-                              }
-                              return GestureDetector(
-                                onTap: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (_) => Dialog(
-                                      backgroundColor: Colors.black,
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Image.network(
-                                            photoUrl,
-                                            fit: BoxFit.contain,
-                                          ),
-                                          Padding(
-                                            padding: EdgeInsets.all(8.w),
-                                            child: Text(
-                                              timeLabel,
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 15.sp,
-                                              ),
-                                            ),
-                                          ),
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.of(context).pop(),
-                                            child: Text(
-                                              'Close',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 14.sp,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(12.r),
-                                      child: Image.network(
-                                        photoUrl,
-                                        width: 90.w,
-                                        height: 90.w,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                    if (timeLabel.isNotEmpty)
-                                      Positioned(
-                                        bottom: 2.h,
-                                        left: 2.w,
-                                        child: Container(
-                                          color: Colors.black54,
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 4.w,
-                                            vertical: 2.h,
-                                          ),
-                                          child: Text(
-                                            timeLabel,
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 10.sp,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        )
-                      else
-                        Text(
-                          'No completion photos available.',
-                          style: TextStyle(color: Colors.grey.shade600),
-                        ),
-                      SizedBox(height: 18.h),
-                      Text(
-                        complaintData!['completionNotes'] ??
-                            'No description provided.',
-                        style: TextStyle(color: Colors.black, fontSize: 14.sp),
-                      ),
-                      if (complaintData!['completionVoiceNote'] != null &&
-                          complaintData!['completionVoiceNote']
-                              .toString()
-                              .isNotEmpty)
-                        Padding(
-                          padding: EdgeInsets.only(top: 12.h),
-                          child: VoiceNotePlayer(
-                            url: complaintData!['completionVoiceNote'],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+              // Resolution Details
+              if (_reportData!['status'] == 'Resolved')
+                _buildResolutionCard(loc),
 
-              SizedBox(height: 10.h), // Bottom padding
+              // Grievance Details
+              if (grievanceData != null) _buildGrievanceDetailsCard(loc),
 
+              SizedBox(height: 10.h),
+
+              // --- Grievance Button ---
               Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.h),
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
                 child: SizedBox(
                   width: double.infinity,
-                  height: 48.h,
                   child: ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.report_problem,
+                    icon: const Icon(
+                      Icons.report_problem_outlined,
                       color: Colors.white,
-                      size: 22.sp,
                     ),
                     label: Text(
                       loc.raiseGrievance,
@@ -783,30 +254,31 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 16.sp,
-                        letterSpacing: 0.2,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
+                      backgroundColor: _isGrievanceButtonEnabled
+                          ? Colors.redAccent
+                          : Colors.grey.shade400,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.r),
                       ),
-                      elevation: 0,
-                      padding: EdgeInsets.symmetric(
-                        vertical: 0,
-                      ), // Remove extra vertical padding
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
                     ),
-                    onPressed: () {
-                      // TODO: Implement grievance raising logic or navigation
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Raise Grievance pressed!')),
-                      );
-                    },
+                    onPressed: _isGrievanceButtonEnabled
+                        ? () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => RaiseGrievancePage(
+                                complaintId: widget.complaintId,
+                              ),
+                            ),
+                          )
+                        : null,
                   ),
                 ),
               ),
 
-              SizedBox(height: 10.h), // Extra bottom padding if needed
+              SizedBox(height: 20.h),
             ],
           ),
         ),
@@ -814,16 +286,426 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
     );
   }
 
-  // --- Connect status lines ---
+  // --- WIDGET BUILDER METHODS ---
+
+  Widget _buildTopCard(AppLocalizations loc) {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: 14.h),
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: ReportDetailsPage.mainBlue.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                padding: EdgeInsets.all(8.w),
+                child: Icon(
+                  getCategoryIcon(_reportData!['category'] ?? ''),
+                  color: ReportDetailsPage.mainBlue,
+                  size: 28.sp,
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "${_reportData!['category'] ?? ''} - ${_reportData!['subcategory'] ?? ''}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16.sp,
+                        color: Colors.black,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      "${DateFormat('dd MMM yyyy').format(DateTime.parse(_reportData!['dateTime']))}, ${DateFormat('hh:mm a').format(DateTime.parse(_reportData!['dateTime']))}",
+                      style: TextStyle(color: Colors.black54, fontSize: 13.sp),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          Row(
+            children: [
+              Icon(
+                Icons.location_on,
+                color: ReportDetailsPage.mainBlue,
+                size: 18.sp,
+              ),
+              SizedBox(width: 4.w),
+              Expanded(
+                child: Text(
+                  _reportData!['location'] ?? '',
+                  style: TextStyle(color: Colors.black87, fontSize: 14.sp),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 6.h),
+          Row(
+            children: [
+              Icon(Icons.tag, color: Colors.grey, size: 18.sp),
+              SizedBox(width: 4.w),
+              Expanded(
+                child: Text(
+                  loc.refId(_reportData!['complaintId'] ?? ''),
+                  style: TextStyle(color: Colors.black54, fontSize: 13.sp),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Chip(
+                label: Text(
+                  _getStatusLabel(_reportData!['status'] ?? '', loc),
+                  style: TextStyle(
+                    color: _getStatusColor(_reportData!['status']?.trim()),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13.sp,
+                  ),
+                ),
+                backgroundColor: _getStatusBgColor(
+                  _reportData!['status']?.trim(),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 0.h),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMediaCard(
+    AppLocalizations loc,
+    String titleKey,
+    List<dynamic> media,
+  ) {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: 14.h),
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            titleKey == 'Grievance Photos' ? loc.photos : loc.photosSubmitted,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),
+          ),
+          SizedBox(height: 10.h),
+          SizedBox(
+            height: 90.h,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: media.length,
+              separatorBuilder: (_, __) => SizedBox(width: 10.w),
+              itemBuilder: (context, i) {
+                // --- ERROR FIX STARTS HERE ---
+                final dynamic rawItem = media[i];
+                bool isVideo = false;
+                String url;
+                String? timestamp;
+
+                if (rawItem is Map) {
+                  // Handles citizen-submitted media {url, type, timestamp}
+                  isVideo = rawItem['type'] == 'video';
+                  url = rawItem['url'] as String;
+                  timestamp = rawItem['timestamp'] as String?;
+                } else {
+                  // Handles worker-submitted media (just a URL string)
+                  url = rawItem as String;
+                  // For worker photos, we can use the main completion timestamp
+                  timestamp = _reportData!['completionTimestamp'] as String?;
+                }
+                // --- ERROR FIX ENDS HERE ---
+
+                String timeLabel = '';
+                if (timestamp != null) {
+                  try {
+                    timeLabel = DateFormat(
+                      'dd MMM, hh:mm a',
+                    ).format(DateTime.parse(timestamp));
+                  } catch (_) {}
+                }
+                return GestureDetector(
+                  onTap: () {
+                    if (isVideo) {
+                      showDialog(
+                        context: context,
+                        builder: (_) => Dialog(
+                          backgroundColor: Colors.black,
+                          child: _VideoPreviewDialog(
+                            url: url,
+                            timestamp: timeLabel,
+                          ),
+                        ),
+                      );
+                    } else {
+                      showDialog(
+                        context: context,
+                        builder: (_) => Dialog(
+                          backgroundColor: Colors.black,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Image.network(
+                                url,
+                                width: 300.w,
+                                fit: BoxFit.contain,
+                              ),
+                              Padding(
+                                padding: EdgeInsets.all(8.w),
+                                child: Text(
+                                  timeLabel,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15.sp,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: Text(
+                                  loc.close,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14.sp,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12.r),
+                        child: isVideo
+                            ? Container(
+                                width: 90.w,
+                                height: 90.w,
+                                color: Colors.black12,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.videocam,
+                                    color: Colors.red,
+                                    size: 40.sp,
+                                  ),
+                                ),
+                              )
+                            : Image.network(
+                                url,
+                                width: 90.w,
+                                height: 90.w,
+                                fit: BoxFit.cover,
+                              ),
+                      ),
+                      if (timeLabel.isNotEmpty)
+                        Positioned(
+                          bottom: 2.h,
+                          left: 2.w,
+                          child: Container(
+                            color: Colors.black54,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 4.w,
+                              vertical: 2.h,
+                            ),
+                            child: Text(
+                              timeLabel,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10.sp,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDescriptionCard(
+    AppLocalizations loc,
+    String titleKey,
+    String? description,
+    String? voiceUrl,
+  ) {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: 14.h),
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            loc.issueDescription, // Assuming titleKey maps to this
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            description ?? loc.notAvailable,
+            style: TextStyle(fontSize: 14.sp, color: Colors.black87),
+          ),
+          if (voiceUrl != null && voiceUrl.isNotEmpty) ...[
+            SizedBox(height: 12.h),
+            VoiceNotePlayer(url: voiceUrl),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimelineCard(AppLocalizations loc) {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: 14.h),
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            loc.statusTimeline,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),
+          ),
+          SizedBox(height: 12.h),
+          _buildStatusTimeline(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResolutionCard(AppLocalizations loc) {
+    final photos = _reportData!['completionPhotos'] as List<dynamic>? ?? [];
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: 14.h),
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Resolution Details',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15.sp,
+              color: Colors.black,
+            ),
+          ),
+          SizedBox(height: 14.h),
+          if (photos.isNotEmpty)
+            _buildMediaCard(loc, 'Resolution Photos', photos),
+          SizedBox(height: 18.h),
+          Text(
+            _reportData!['completionNotes'] ?? 'No description provided.',
+            style: TextStyle(color: Colors.black, fontSize: 14.sp),
+          ),
+          if (_reportData!['completionVoiceNote'] != null &&
+              _reportData!['completionVoiceNote'].toString().isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 12.h),
+              child: VoiceNotePlayer(url: _reportData!['completionVoiceNote']),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGrievanceDetailsCard(AppLocalizations loc) {
+    final grievanceData = _reportData!['grievance'] as Map<dynamic, dynamic>;
+    final photos = grievanceData['photos'] as List<dynamic>? ?? [];
+    final voiceNote = grievanceData['voiceNote'] as String?;
+
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: 14.h),
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        border: Border.all(color: Colors.red.shade200),
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            loc.grievanceReason,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15.sp,
+              color: Colors.red.shade800,
+            ),
+          ),
+          SizedBox(height: 14.h),
+          Text(
+            grievanceData['reason'] ?? 'No reason provided.',
+            style: TextStyle(color: Colors.black, fontSize: 14.sp),
+          ),
+          if (photos.isNotEmpty) ...[
+            SizedBox(height: 14.h),
+            _buildMediaCard(loc, 'Grievance Photos', photos),
+          ],
+          if (voiceNote != null && voiceNote.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 12.h),
+              child: VoiceNotePlayer(url: voiceNote),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStatusTimeline() {
     final loc = AppLocalizations.of(context)!;
 
     int currentStage = 0;
-    if (complaintData!['status'] == 'Resolved') {
+    if (_reportData!['status'] == 'Resolved') {
       currentStage = 4;
-    } else if (complaintData!['status'] == 'In Progress') {
+    } else if (_reportData!['status'] == 'In Progress') {
       currentStage = 3;
-    } else if (complaintData!['assignedTo'] != null) {
+    } else if (_reportData!['assignedTo'] != null) {
       currentStage = 2;
     } else {
       currentStage = 1;
@@ -834,7 +716,8 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
         "icon": Icons.check_circle,
         "color": Colors.green,
         "title": loc.submitted,
-        "date": "$formattedDate, $formattedTime",
+        "date":
+            "${DateFormat('dd MMM yyyy').format(DateTime.parse(_reportData!['dateTime']))}, ${DateFormat('hh:mm a').format(DateTime.parse(_reportData!['dateTime']))}",
         "desc": loc.reportSubmittedByCitizen,
       },
       {
@@ -848,10 +731,10 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
         "icon": Icons.person_search,
         "color": Colors.purple,
         "title": loc.assigned,
-        "date": (complaintData!['assignedDate'] != null)
+        "date": (_reportData!['assignedDate'] != null)
             ? DateFormat(
                 'dd MMM yyyy, hh:mm a',
-              ).format(DateTime.parse(complaintData!['assignedDate']).toLocal())
+              ).format(DateTime.parse(_reportData!['assignedDate']).toLocal())
             : (currentStage == 2 ? loc.currentStage : loc.notYet),
         "desc": loc.assignedToMunicipalWorker,
       },
@@ -859,10 +742,10 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
         "icon": Icons.construction,
         "color": Colors.blue,
         "title": loc.inProgress,
-        "date": (complaintData!['inProgressTimestamp'] != null)
+        "date": (_reportData!['inProgressTimestamp'] != null)
             ? DateFormat(
                 'dd MMM yyyy, hh:mm a',
-              ).format(DateTime.parse(complaintData!['inProgressTimestamp']))
+              ).format(DateTime.parse(_reportData!['inProgressTimestamp']))
             : (currentStage == 3 ? loc.currentStage : loc.notYet),
         "desc": loc.workHasStarted,
       },
@@ -870,40 +753,33 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
         "icon": Icons.verified,
         "color": Colors.green,
         "title": loc.resolved,
-        "date": (complaintData!['completionTimestamp'] != null)
+        "date": (_reportData!['completionTimestamp'] != null)
             ? DateFormat(
                 'dd MMM yyyy, hh:mm a',
-              ).format(DateTime.parse(complaintData!['completionTimestamp']))
+              ).format(DateTime.parse(_reportData!['completionTimestamp']))
             : (currentStage == 4 ? loc.currentStage : loc.notYet),
         "desc": loc.issueResolved,
       },
     ];
 
-    // Height per step (adjust as needed)
     final stepHeight = 95.0.h;
 
     return SizedBox(
       height: steps.length * stepHeight,
       child: Stack(
         children: [
-          // Draw multiple line segments colored according to progress
           for (int i = 0; i < steps.length - 1; i++)
             Positioned(
-              left: 16.w, // Center of the icon column
-              top:
-                  30.h +
-                  (i * stepHeight), // Start position (first icon's center)
-              height: stepHeight, // One segment height
+              left: 16.w,
+              top: 30.h + (i * stepHeight),
+              height: stepHeight,
               width: 2.w,
               child: Container(
                 color: currentStage > i
-                    ? steps[i]["color"]
-                          as Color // Completed segment: use that step's color
-                    : Colors.grey.shade300, // Future segment: gray
+                    ? steps[i]["color"] as Color
+                    : Colors.grey.shade300,
               ),
             ),
-
-          // Place all steps on top of the line
           Column(
             children: List.generate(steps.length, (i) {
               final isActive = currentStage >= i;
@@ -916,7 +792,6 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Icon column - centered on the vertical line
                     Container(
                       width: 32.w,
                       height: stepHeight,
@@ -926,8 +801,7 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
                         padding: EdgeInsets.all(6.w),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors
-                              .white, // White background to cover the line
+                          color: Colors.white,
                           border: Border.all(
                             color: isActive ? stepColor : Colors.grey.shade400,
                             width: 1.5,
@@ -941,7 +815,6 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
                       ),
                     ),
                     SizedBox(width: 10.w),
-                    // Step content
                     Expanded(
                       child: Padding(
                         padding: EdgeInsets.only(top: 10.h),
@@ -995,6 +868,57 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
       ),
     );
   }
+
+  String _getStatusLabel(String status, AppLocalizations loc) {
+    switch (status) {
+      case 'Pending':
+        return loc.pending;
+      case 'Assigned':
+        return loc.assigned;
+      case 'In Progress':
+        return loc.inProgress;
+      case 'Resolved':
+        return loc.resolved;
+      case 'Grievance Raised':
+        return loc.grievanceRaised;
+      default:
+        return status;
+    }
+  }
+
+  Color _getStatusColor(String? status) {
+    switch (status) {
+      case 'Resolved':
+        return Colors.green.shade700;
+      case 'In Progress':
+        return Colors.blue.shade700;
+      case 'Assigned':
+        return Colors.purple.shade700;
+      case 'Pending':
+        return Colors.orange.shade700;
+      case 'Grievance Raised':
+        return Colors.red.shade700;
+      default:
+        return Colors.grey.shade700;
+    }
+  }
+
+  Color _getStatusBgColor(String? status) {
+    switch (status) {
+      case 'Resolved':
+        return Colors.green.shade50;
+      case 'In Progress':
+        return Colors.blue.shade50;
+      case 'Assigned':
+        return Colors.purple.shade50;
+      case 'Pending':
+        return Colors.orange.shade50;
+      case 'Grievance Raised':
+        return Colors.red.shade50;
+      default:
+        return Colors.grey.shade200;
+    }
+  }
 }
 
 // Video preview dialog
@@ -1014,12 +938,11 @@ class _VideoPreviewDialogState extends State<_VideoPreviewDialog> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.network(widget.url)
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
       ..initialize().then((_) {
-        setState(() {
-          _initialized = true;
-        });
+        setState(() => _initialized = true);
         _controller.play();
+        _controller.setLooping(true);
       });
   }
 
@@ -1040,14 +963,14 @@ class _VideoPreviewDialogState extends State<_VideoPreviewDialog> {
               ? VideoPlayer(_controller)
               : Container(
                   color: Colors.black,
-                  child: Center(child: CircularProgressIndicator()),
+                  child: const Center(child: CircularProgressIndicator()),
                 ),
         ),
         Padding(
-          padding: EdgeInsets.all(8),
+          padding: const EdgeInsets.all(8),
           child: Text(
             widget.timestamp,
-            style: TextStyle(color: Colors.white, fontSize: 15),
+            style: const TextStyle(color: Colors.white, fontSize: 15),
           ),
         ),
         Row(
@@ -1058,19 +981,17 @@ class _VideoPreviewDialogState extends State<_VideoPreviewDialog> {
                 _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
                 color: Colors.white,
               ),
-              onPressed: () {
-                setState(() {
-                  _controller.value.isPlaying
-                      ? _controller.pause()
-                      : _controller.play();
-                });
-              },
+              onPressed: () => setState(() {
+                _controller.value.isPlaying
+                    ? _controller.pause()
+                    : _controller.play();
+              }),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 AppLocalizations.of(context)!.close,
-                style: TextStyle(color: Colors.white, fontSize: 14),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
               ),
             ),
           ],

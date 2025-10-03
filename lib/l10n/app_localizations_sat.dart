@@ -558,7 +558,7 @@ class AppLocalizationsSat extends AppLocalizations {
   String get errorMessage => 'Error';
 
   @override
-  String get notAvailable => 'Not available';
+  String get notAvailable => 'N/A';
 
   @override
   String get worker => 'ᱠᱟᱹᱢᱤᱭᱟᱹ';
@@ -742,4 +742,32 @@ class AppLocalizationsSat extends AppLocalizations {
   @override
   String get faqA5 =>
       'ᱩᱡᱩᱨ ᱵᱤᱵᱨᱚᱬ ᱠᱷᱩᱞᱟᱹᱣ ᱢᱮ ᱟᱨ ᱞᱟᱛᱟᱨ ᱨᱮ \'ᱩᱡᱩᱨ ᱨᱟᱠᱟᱵ ᱢᱮ\' ᱨᱮ ᱚᱛᱟᱭ ᱢᱮ᱾';
+
+  @override
+  String get grievanceRaised => 'Grievance Raised';
+
+  @override
+  String get grievanceReports => 'Grievance Reports';
+
+  @override
+  String get noGrievancesFound => 'No pending grievances found.';
+
+  @override
+  String get complaint => 'Complaint';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get grievanceReason => 'Reason for Grievance';
+
+  @override
+  String get grievanceHint =>
+      'Explain why you are not satisfied with the resolution.';
+
+  @override
+  String get reasonRequired => 'Reason cannot be empty.';
+
+  @override
+  String get grievanceSubmittedSuccess => 'Grievance submitted successfully.';
 }

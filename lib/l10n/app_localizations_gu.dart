@@ -559,7 +559,7 @@ class AppLocalizationsGu extends AppLocalizations {
   String get errorMessage => 'Error';
 
   @override
-  String get notAvailable => 'Not available';
+  String get notAvailable => 'N/A';
 
   @override
   String get worker => 'Worker';
@@ -744,4 +744,32 @@ class AppLocalizationsGu extends AppLocalizations {
   @override
   String get faqA5 =>
       'Open the complaint details and tap \'Raise Grievance\' at the bottom.';
+
+  @override
+  String get grievanceRaised => 'Grievance Raised';
+
+  @override
+  String get grievanceReports => 'Grievance Reports';
+
+  @override
+  String get noGrievancesFound => 'No pending grievances found.';
+
+  @override
+  String get complaint => 'Complaint';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get grievanceReason => 'Reason for Grievance';
+
+  @override
+  String get grievanceHint =>
+      'Explain why you are not satisfied with the resolution.';
+
+  @override
+  String get reasonRequired => 'Reason cannot be empty.';
+
+  @override
+  String get grievanceSubmittedSuccess => 'Grievance submitted successfully.';
 }

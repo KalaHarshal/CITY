@@ -743,4 +743,32 @@ class AppLocalizationsKn extends AppLocalizations {
   @override
   String get faqA5 =>
       'ದೂರು ವಿವರಗಳನ್ನು ತೆರೆಯಿರಿ ಮತ್ತು ಕೆಳಭಾಗದಲ್ಲಿರುವ \'ಅರ್ಜಿ ಸಲ್ಲಿಸಿ\' ಒತ್ತಿ.';
+
+  @override
+  String get grievanceRaised => 'Grievance Raised';
+
+  @override
+  String get grievanceReports => 'Grievance Reports';
+
+  @override
+  String get noGrievancesFound => 'No pending grievances found.';
+
+  @override
+  String get complaint => 'Complaint';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get grievanceReason => 'Reason for Grievance';
+
+  @override
+  String get grievanceHint =>
+      'Explain why you are not satisfied with the resolution.';
+
+  @override
+  String get reasonRequired => 'Reason cannot be empty.';
+
+  @override
+  String get grievanceSubmittedSuccess => 'Grievance submitted successfully.';
 }
