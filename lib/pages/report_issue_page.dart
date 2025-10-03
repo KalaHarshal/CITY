@@ -20,6 +20,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'package:video_player/video_player.dart'; // Add this import
+import 'package:video_compress/video_compress.dart';
 
 class _MediaWithTimestamp {
   final File file;
@@ -426,7 +427,22 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
       final type = media.isVideo ? 'video' : 'photo';
       final fileName = '${type}_${i + 1}_$timestampStr.$ext';
       final ref = storageRef.child('complaints/$complaintId/$fileName');
-      final uploadTask = await ref.putFile(media.file);
+
+      File fileToUpload = media.file;
+
+      if (media.isVideo) {
+        // Compress video before upload
+        final info = await VideoCompress.compressVideo(
+          media.file.path,
+          quality: VideoQuality.MediumQuality,
+          deleteOrigin: false,
+        );
+        if (info != null && info.file != null) {
+          fileToUpload = info.file!;
+        }
+      }
+
+      final uploadTask = await ref.putFile(fileToUpload);
       final url = await uploadTask.ref.getDownloadURL();
       mediaUrls.add({
         'type': type,
