@@ -167,9 +167,9 @@ class _LoginPageState extends State<LoginPage> {
                 },
               ),
               ListTile(
-                title: const Text('मराठी'),
+                title: const Text('సంతాలి'),
                 onTap: () {
-                  localeProvider.setLocale(const Locale('mr'));
+                  localeProvider.setLocale(const Locale('sat'));
                   Navigator.of(context).pop();
                 },
               ),
