@@ -16,7 +16,7 @@
   "enter_phone_number": "Enter your phone number",
   "send_otp": "Send OTP",
   "login_as_worker": "Login as Worker",
-  "government_initiative": "Government of Jharkhand Initiative",
+  "government_initiative": "Government of India Initiative",
   "secure_and_verified": "Secure & Verified",
   "english": "English",
   "hindi": "Hindi",
@@ -98,7 +98,7 @@
 
   "myReports": "My Complaints",
   "all": "All",
-  "footerNote": "Government of Jharkhand Initiative – Secure & Verified",
+  "footerNote": "Government of India Initiative – Secure & Verified",
   "settings": "Settings",
   "notifications": "Notifications",
   "privacyPolicy": "Privacy Policy",

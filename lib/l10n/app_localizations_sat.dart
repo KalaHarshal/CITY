@@ -55,10 +55,10 @@ class AppLocalizationsSat extends AppLocalizations {
   String get send_otp => 'OTP ᱪᱷᱚᱭᱚᱢ';
 
   @override
-  String get login_as_worker => 'ᱣᱟᱹᱠᱚᱨ ᱨᱮ ᱞᱚᱜᱤᱱ';
+  String get login_as_worker => 'ᱠᱟᱹᱢᱤᱭᱟᱹ ᱞᱮᱠᱟᱛᱮ ᱞᱚᱜᱤᱱ ᱢᱮ';
 
   @override
-  String get government_initiative => 'ᱡᱷᱟᱹᱨᱠᱟᱹᱱᱰ ᱥᱟᱹᱨᱠᱟᱨ ᱤᱱᱤᱥᱤᱴᱤᱵ';
+  String get government_initiative => 'ᱥᱤᱧᱚᱛ ᱥᱚᱨᱠᱟᱨᱟᱜ୍  पहल';
 
   @override
   String get secure_and_verified => 'ᱡᱷᱳᱛᱚᱜ ᱟᱨ ᱱᱮᱞᱠᱟᱱᱟᱢ';
@@ -283,19 +283,19 @@ class AppLocalizationsSat extends AppLocalizations {
   String get submitReport => 'ᱨᱤᱯᱚᱨᱴ ᱯᱟᱴᱮᱭᱚᱢ';
 
   @override
-  String get myReports => 'ᱟᱨ ᱨᱤᱯᱚᱨᱴ';
+  String get myReports => 'ᱤᱧᱟᱜ ᱨᱤᱯᱚᱴ';
 
   @override
-  String get all => 'ᱥᱟᱵ';
+  String get all => 'ᱡᱷᱚᱛᱚ';
 
   @override
-  String get footerNote => 'ᱡᱷᱟᱹᱨᱠᱟᱹᱱᱰ ᱥᱟᱹᱨᱠᱟᱨ ᱤᱱᱤᱥᱤᱴᱤᱵ – ᱡᱷᱳᱛᱚᱜ ᱟᱨ ᱱᱮᱞᱠᱟᱱᱟᱢ';
+  String get footerNote => 'ᱥᱤᱧᱚᱛ ᱥᱚᱨᱠᱟᱨᱟᱜ୍  पहल – ᱡᱷᱳᱛᱚᱜ ᱟᱨ ᱱᱮᱞᱠᱟᱱᱟᱢ';
 
   @override
-  String get settings => 'ᱥᱮᱴᱤᱝᱥ';
+  String get settings => 'ᱥᱮᱴᱤᱝ';
 
   @override
-  String get notifications => 'ᱱᱚᱴᱤᱥ';
+  String get notifications => 'ᱥᱩᱪᱟᱹᱱᱟᱹ';
 
   @override
   String get privacyPolicy => 'ᱜᱚᱯᱱᱤᱭᱟ ᱱᱤᱴᱤ';

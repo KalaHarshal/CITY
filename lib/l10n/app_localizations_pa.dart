@@ -58,7 +58,7 @@ class AppLocalizationsPa extends AppLocalizations {
   String get login_as_worker => 'ਕਾਮੀ ਵਜੋਂ ਲੌਗਇਨ ਕਰੋ';
 
   @override
-  String get government_initiative => 'ਝਾਰਖੰਡ ਸਰਕਾਰ ਦੀ ਪਹਲ';
+  String get government_initiative => 'ਭਾਰਤ ਸਰਕਾਰ ਦੀ ਪਹਿਲ';
 
   @override
   String get secure_and_verified => 'ਸੁਰੱਖਿਅਤ ਅਤੇ ਪ੍ਰਮਾਣਿਤ';
@@ -289,7 +289,7 @@ class AppLocalizationsPa extends AppLocalizations {
   String get all => 'ਸਭ';
 
   @override
-  String get footerNote => 'ਝਾਰਖੰਡ ਸਰਕਾਰ ਦੀ ਪਹਲ – ਸੁਰੱਖਿਅਤ ਅਤੇ ਪ੍ਰਮਾਣਿਤ';
+  String get footerNote => 'ਭਾਰਤ ਸਰਕਾਰ ਦੀ ਪਹਿਲ – ਸੁਰੱਖਿਅਤ ਅਤੇ ਪ੍ਰਮਾਣਿਤ';
 
   @override
   String get settings => 'ਸੈਟਿੰਗਜ਼';

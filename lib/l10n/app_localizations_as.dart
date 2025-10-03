@@ -58,7 +58,7 @@ class AppLocalizationsAs extends AppLocalizations {
   String get login_as_worker => 'কৰ্মী হিচাপে লগিন কৰক';
 
   @override
-  String get government_initiative => 'ঝাড়খণ্ড চৰকাৰৰ উদ্যোগ';
+  String get government_initiative => 'ভাৰত চৰকাৰৰ উদ্যোগ';
 
   @override
   String get secure_and_verified => 'সুৰক্ষিত আৰু পৰীক্ষিত';
@@ -289,7 +289,7 @@ class AppLocalizationsAs extends AppLocalizations {
   String get all => 'সকলো';
 
   @override
-  String get footerNote => 'ঝাড়খণ্ড চৰকাৰৰ উদ্যোগ – সুৰক্ষিত আৰু পৰীক্ষিত';
+  String get footerNote => 'ভাৰত চৰকাৰৰ উদ্যোগ – সুৰক্ষিত আৰু পৰীক্ষিত';
 
   @override
   String get settings => 'ছেটিংছ';

@@ -55,16 +55,16 @@ class AppLocalizationsTe extends AppLocalizations {
   String get send_otp => 'OTP పంపండి';
 
   @override
-  String get login_as_worker => 'వర్కర్‌గా లాగిన్ అవ్వండి';
+  String get login_as_worker => 'కార్మికుడిగా లాగిన్ చేయండి';
 
   @override
-  String get government_initiative => 'జార్ఖండ్ ప్రభుత్వ పథకం';
+  String get government_initiative => 'భారత ప్రభుత్వ పథకం';
 
   @override
   String get secure_and_verified => 'సురక్షితంగా & ధృవీకరించబడింది';
 
   @override
-  String get english => 'ఆంగ్లం';
+  String get english => 'ఇంగ్లీష్';
 
   @override
   String get hindi => 'హిందీ';
@@ -291,8 +291,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get all => 'అన్నీ';
 
   @override
-  String get footerNote =>
-      'జార్ఖండ్ ప్రభుత్వ పథకం – సురక్షితంగా & ధృవీకరించబడింది';
+  String get footerNote => 'భారత ప్రభుత్వ పథకం – సురక్షితంగా & ధృవీకరించబడింది';
 
   @override
   String get settings => 'సెట్టింగ్స్';

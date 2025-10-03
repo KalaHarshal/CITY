@@ -58,10 +58,10 @@ class AppLocalizationsMr extends AppLocalizations {
   String get login_as_worker => 'कामगार म्हणून लॉगिन करा';
 
   @override
-  String get government_initiative => 'झारखंड सरकारची पुढाकार';
+  String get government_initiative => 'भारत सरकारचा उपक्रम';
 
   @override
-  String get secure_and_verified => 'सुरक्षित आणि पडताळलेले';
+  String get secure_and_verified => 'सुरक्षित आणि सत्यापित';
 
   @override
   String get english => 'इंग्रजी';
@@ -291,7 +291,7 @@ class AppLocalizationsMr extends AppLocalizations {
   String get all => 'सर्व';
 
   @override
-  String get footerNote => 'झारखंड सरकारची पुढाकार – सुरक्षित व पडताळलेले';
+  String get footerNote => 'भारत सरकारचा उपक्रम – सुरक्षित आणि सत्यापित';
 
   @override
   String get settings => 'सेटिंग्ज';

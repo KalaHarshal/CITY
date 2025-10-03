@@ -58,7 +58,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get login_as_worker => 'কর্মী হিসেবে লগইন করুন';
 
   @override
-  String get government_initiative => 'ঝাড়খণ্ড সরকারের উদ্যোগ';
+  String get government_initiative => 'ভারত সরকারের উদ্যোগ';
 
   @override
   String get secure_and_verified => 'নিরাপদ ও যাচাই করা';
@@ -289,7 +289,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get all => 'সব';
 
   @override
-  String get footerNote => 'ঝাড়খণ্ড সরকারের উদ্যোগ – নিরাপদ ও যাচাই করা';
+  String get footerNote => 'ভারত সরকারের উদ্যোগ – নিরাপদ ও যাচাই করা';
 
   @override
   String get settings => 'সেটিংস';

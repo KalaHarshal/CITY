@@ -55,10 +55,10 @@ class AppLocalizationsTa extends AppLocalizations {
   String get send_otp => 'OTP அனுப்பு';
 
   @override
-  String get login_as_worker => 'பணியாளராக உள்நுழைக';
+  String get login_as_worker => 'பணியாளராக உள்நுழையவும்';
 
   @override
-  String get government_initiative => 'ஜார்கண்ட் அரசின் முயற்சி';
+  String get government_initiative => 'இந்திய அரசின் முயற்சி';
 
   @override
   String get secure_and_verified => 'பாதுகாப்பான & சரிபார்க்கப்பட்டது';
@@ -295,7 +295,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get footerNote =>
-      'ஜார்கண்ட் அரசின் முயற்சி – பாதுகாப்பான & சரிபார்க்கப்பட்டது';
+      'இந்திய அரசின் முயற்சி – பாதுகாப்பான & சரிபார்க்கப்பட்டது';
 
   @override
   String get settings => 'அமைப்புகள்';

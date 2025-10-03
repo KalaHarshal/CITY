@@ -58,7 +58,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get login_as_worker => 'Login as Worker';
 
   @override
-  String get government_initiative => 'Government of Jharkhand Initiative';
+  String get government_initiative => 'Government of India Initiative';
 
   @override
   String get secure_and_verified => 'Secure & Verified';
@@ -289,8 +289,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get all => 'All';
 
   @override
-  String get footerNote =>
-      'Government of Jharkhand Initiative – Secure & Verified';
+  String get footerNote => 'Government of India Initiative – Secure & Verified';
 
   @override
   String get settings => 'Settings';

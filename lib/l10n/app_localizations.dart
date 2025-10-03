@@ -217,7 +217,7 @@ abstract class AppLocalizations {
   /// No description provided for @government_initiative.
   ///
   /// In en, this message translates to:
-  /// **'Government of Jharkhand Initiative'**
+  /// **'Government of India Initiative'**
   String get government_initiative;
 
   /// No description provided for @secure_and_verified.
@@ -679,7 +679,7 @@ abstract class AppLocalizations {
   /// No description provided for @footerNote.
   ///
   /// In en, this message translates to:
-  /// **'Government of Jharkhand Initiative – Secure & Verified'**
+  /// **'Government of India Initiative – Secure & Verified'**
   String get footerNote;
 
   /// No description provided for @settings.

@@ -55,10 +55,10 @@ class AppLocalizationsKn extends AppLocalizations {
   String get send_otp => 'OTP ಕಳುಹಿಸಿ';
 
   @override
-  String get login_as_worker => 'ಕಾರ್ಮಿಕನಾಗಿ ಲಾಗಿನ್ ಮಾಡಿ';
+  String get login_as_worker => 'ಕೆಲಸಗಾರರಾಗಿ ಲಾಗಿನ್ ಮಾಡಿ';
 
   @override
-  String get government_initiative => 'ಜಾರ್ಖಂಡ್ ಸರ್ಕಾರದ ಯೋಜನೆ';
+  String get government_initiative => 'ಭಾರತ ಸರ್ಕಾರದ ಯೋಜನೆ';
 
   @override
   String get secure_and_verified => 'ಭದ್ರ & ಪರಿಶೀಲಿತ';
@@ -290,7 +290,7 @@ class AppLocalizationsKn extends AppLocalizations {
   String get all => 'ಎಲ್ಲಾ';
 
   @override
-  String get footerNote => 'ಜಾರ್ಖಂಡ್ ಸರ್ಕಾರದ ಯೋಜನೆ – ಭದ್ರ & ಪರಿಶೀಲಿತ';
+  String get footerNote => 'ಭಾರತ ಸರ್ಕಾರದ ಯೋಜನೆ – ಭದ್ರ & ಪರಿಶೀಲಿತ';
 
   @override
   String get settings => 'ಸೆಟ್ಟಿಂಗ್‌ಗಳು';

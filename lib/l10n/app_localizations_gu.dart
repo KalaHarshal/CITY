@@ -58,7 +58,7 @@ class AppLocalizationsGu extends AppLocalizations {
   String get login_as_worker => 'કર્મચારી તરીકે પ્રવેશ કરો';
 
   @override
-  String get government_initiative => 'ઝારખંડ સરકારની પહેલ';
+  String get government_initiative => 'ભારત સરકારની પહેલ';
 
   @override
   String get secure_and_verified => 'સુરક્ષિત અને પ્રમાણિત';
@@ -290,7 +290,7 @@ class AppLocalizationsGu extends AppLocalizations {
   String get all => 'બધા';
 
   @override
-  String get footerNote => 'ઝારખંડ સરકારની પહેલ – સુરક્ષિત અને પ્રમાણિત';
+  String get footerNote => 'ભારત સરકારની પહેલ – સુરક્ષિત અને પ્રમાણિત';
 
   @override
   String get settings => 'સેટિંગ્સ';
