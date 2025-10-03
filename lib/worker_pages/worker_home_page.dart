@@ -21,6 +21,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
   final complaints = <ComplaintItem>[];
 
   String? _workerId;
+  String? _workerStatus; // "Available" or "On Leave"
 
   /// ✅ Map filter keys to localized labels
   String getFilterLabel(String filterKey, BuildContext context) {
@@ -62,6 +63,14 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
     final prefs = await SharedPreferences.getInstance();
     _workerId = prefs.getString('workerId');
     if (_workerId != null) {
+      // Fetch worker status
+      final workerSnap = await FirebaseDatabase.instance
+          .ref('workers/$_workerId')
+          .get();
+      if (workerSnap.exists && workerSnap.value != null) {
+        final data = Map<String, dynamic>.from(workerSnap.value as Map);
+        _workerStatus = data['status'] as String? ?? "Available";
+      }
       await _fetchAssignedComplaints();
       setState(() {}); // Refresh UI after fetching
     }
@@ -160,108 +169,167 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
         title: WorkerDashboardHeader(),
         toolbarHeight: 110.h,
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            child: Card(
-              color: Colors.white,
-              elevation: 3,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14.r),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 10.w),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _SimpleStatusCard(
-                      number: complaints
-                          .where((c) => c.status == 'Assigned')
-                          .length
-                          .toString(),
-                      label: loc.assigned,
+      body: RefreshIndicator(
+        onRefresh: _loadWorkerIdAndComplaints,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                child: Card(
+                  color: Colors.white,
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      vertical: 8.h,
+                      horizontal: 10.w,
                     ),
-                    _SimpleStatusCard(
-                      number: inProgressCount.toString(),
-                      label: loc.inProgress,
-                    ),
-                    _SimpleStatusCard(
-                      number: resolvedCount.toString(),
-                      label: loc.resolved,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          // Filters
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            alignment: Alignment.centerLeft,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: filters.map((f) {
-                  final isSelected = selectedFilter == f;
-                  return Padding(
-                    padding: EdgeInsets.only(right: 8.w),
-                    child: ChoiceChip(
-                      label: Text(
-                        getFilterLabel(f, context),
-                        style: TextStyle(fontSize: 13.sp),
-                      ),
-                      selected: isSelected,
-                      selectedColor: Colors.orange.shade700,
-                      backgroundColor: Colors.white,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black87,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
-                      onSelected: (_) {
-                        setState(() => selectedFilter = f);
-                      },
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                loc.recentComplaints,
-                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-          Expanded(
-            child: filteredComplaints.isEmpty
-                ? Center(
-                    child: Text(
-                      "No complaints assigned to you.",
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  )
-                : RefreshIndicator(
-                    onRefresh: _fetchAssignedComplaints,
-                    child: ListView.builder(
-                      padding: EdgeInsets.only(bottom: 16.h),
-                      itemCount: filteredComplaints.length,
-                      itemBuilder: (context, index) =>
-                          buildComplaintCard(filteredComplaints[index]),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _SimpleStatusCard(
+                          number: complaints
+                              .where((c) => c.status == 'Assigned')
+                              .length
+                              .toString(),
+                          label: loc.assigned,
+                        ),
+                        _SimpleStatusCard(
+                          number: inProgressCount.toString(),
+                          label: loc.inProgress,
+                        ),
+                        _SimpleStatusCard(
+                          number: resolvedCount.toString(),
+                          label: loc.resolved,
+                        ),
+                      ],
                     ),
                   ),
+                ),
+              ),
+              // Worker status
+              if (_workerStatus != null)
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(
+                      vertical: 10.h,
+                      horizontal: 16.w,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _workerStatus == "On Leave"
+                          ? Colors.orange.shade100
+                          : Colors.green.shade100,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _workerStatus == "On Leave"
+                              ? Icons.beach_access
+                              : Icons.work,
+                          color: _workerStatus == "On Leave"
+                              ? Colors.orange.shade700
+                              : Colors.green.shade700,
+                        ),
+                        SizedBox(width: 10.w),
+                        Text(
+                          _workerStatus == "On Leave"
+                              ? "On Leave"
+                              : "Available",
+                          style: TextStyle(
+                            color: _workerStatus == "On Leave"
+                                ? Colors.orange.shade700
+                                : Colors.green.shade700,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              // Filters
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                alignment: Alignment.centerLeft,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: filters.map((f) {
+                      final isSelected = selectedFilter == f;
+                      return Padding(
+                        padding: EdgeInsets.only(right: 8.w),
+                        child: ChoiceChip(
+                          label: Text(
+                            getFilterLabel(f, context),
+                            style: TextStyle(fontSize: 13.sp),
+                          ),
+                          selected: isSelected,
+                          selectedColor: Colors.orange.shade700,
+                          backgroundColor: Colors.white,
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black87,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                          onSelected: (_) {
+                            setState(() => selectedFilter = f);
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    loc.recentComplaints,
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height:
+                    MediaQuery.of(context).size.height *
+                    0.55, // Ensures scrollability
+                child: filteredComplaints.isEmpty
+                    ? Center(
+                        child: Text(
+                          "No complaints assigned to you.",
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.only(bottom: 16.h),
+                        itemCount: filteredComplaints.length,
+                        itemBuilder: (context, index) =>
+                            buildComplaintCard(filteredComplaints[index]),
+                      ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
