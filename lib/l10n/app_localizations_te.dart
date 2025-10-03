@@ -12,6 +12,12 @@ class AppLocalizationsTe extends AppLocalizations {
   String get santhali => 'సంతాలి';
 
   @override
+  String get telugu => 'Telugu';
+
+  @override
+  String get marathi => 'Marathi';
+
+  @override
   String get app_title => 'స్మార్ట్ సివిక్ పోర్టల్';
 
   @override

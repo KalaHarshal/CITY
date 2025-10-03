@@ -1,6 +1,8 @@
 {
   "@@locale": "en",
   "santhali": "Santhali",
+  "telugu": "Telugu",
+  "marathi": "Marathi",
 
   "app_title": "Smart Civic Portal",
   "login_subtitle": "Report civic issues and connect with your local government",

@@ -110,6 +110,18 @@ abstract class AppLocalizations {
   /// **'Santhali'**
   String get santhali;
 
+  /// No description provided for @telugu.
+  ///
+  /// In en, this message translates to:
+  /// **'Telugu'**
+  String get telugu;
+
+  /// No description provided for @marathi.
+  ///
+  /// In en, this message translates to:
+  /// **'Marathi'**
+  String get marathi;
+
   /// No description provided for @app_title.
   ///
   /// In en, this message translates to:

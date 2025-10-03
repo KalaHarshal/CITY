@@ -597,6 +597,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
           return loc.hindi;
         case 'sat':
           return loc.santhali;
+        case 'te':
+          return loc.telugu;
+        case 'mr':
+          return loc.marathi;
         case 'en':
         default:
           return loc.english;
@@ -772,6 +776,20 @@ class _UserProfilePageState extends State<UserProfilePage> {
               title: const Text('हिन्दी'),
               onTap: () {
                 localeProvider.setLocale(const Locale('hi'));
+                Navigator.of(context).pop();
+              },
+            ),
+            ListTile(
+              title: const Text('मराठी'),
+              onTap: () {
+                localeProvider.setLocale(const Locale('mr'));
+                Navigator.of(context).pop();
+              },
+            ),
+            ListTile(
+              title: const Text('తెలుగు'),
+              onTap: () {
+                localeProvider.setLocale(const Locale('te'));
                 Navigator.of(context).pop();
               },
             ),

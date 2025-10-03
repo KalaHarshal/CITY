@@ -12,6 +12,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get santhali => 'Santhali';
 
   @override
+  String get telugu => 'Telugu';
+
+  @override
+  String get marathi => 'Marathi';
+
+  @override
   String get app_title => 'Smart Civic Portal';
 
   @override

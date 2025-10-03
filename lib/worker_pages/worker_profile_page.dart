@@ -535,6 +535,20 @@ void _showLanguageDialog(BuildContext context) {
               },
             ),
             ListTile(
+              title: const Text('मराठी'),
+              onTap: () {
+                localeProvider.setLocale(const Locale('mr'));
+                Navigator.of(context).pop();
+              },
+            ),
+            ListTile(
+              title: const Text('తెలుగు'),
+              onTap: () {
+                localeProvider.setLocale(const Locale('te'));
+                Navigator.of(context).pop();
+              },
+            ),
+            ListTile(
               title: const Text('ᱥᱟᱱᱛᱟᱲᱤ'),
               onTap: () {
                 localeProvider.setLocale(const Locale('sat'));
