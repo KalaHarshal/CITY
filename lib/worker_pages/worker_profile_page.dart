@@ -23,6 +23,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
   // Task stats
   int _tasksCompleted = 0;
   List<String> _badges = [];
+  bool _onLeave = false;
 
   @override
   void initState() {
@@ -93,6 +94,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
         _workerData = data;
         _tasksCompleted = completedCount;
         _badges = earnedBadges;
+        _onLeave = data['status'] == 'On Leave'; // Fetch status from Firebase
         _isLoading = false;
       });
     } catch (e) {
@@ -371,6 +373,67 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                         Icons.location_on,
                         "Pincode", // Localize if needed
                         _workerData['pincode']?.toString() ?? l10n.notAvailable,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 20.h),
+
+              // Leave status toggle (moved up)
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                color: Colors.white,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    vertical: 10.h,
+                    horizontal: 16.w,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _onLeave ? Icons.beach_access : Icons.work,
+                        color: _onLeave ? Colors.orange : Colors.green,
+                        size: 28.sp,
+                      ),
+                      SizedBox(width: 14.w),
+                      Expanded(
+                        child: Text(
+                          _onLeave ? 'On Leave' : 'Available',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
+                            color: _onLeave ? Colors.orange : Colors.green,
+                          ),
+                        ),
+                      ),
+                      Switch(
+                        value: _onLeave,
+                        activeColor: Colors.orange,
+                        inactiveThumbColor: Colors.green,
+                        onChanged: (val) async {
+                          setState(() => _onLeave = val);
+                          // Push status to Firebase
+                          await FirebaseDatabase.instance
+                              .ref('workers/$_workerId')
+                              .update({
+                                'status': val ? 'On Leave' : 'Available',
+                              });
+                          // Optionally, show a snackbar
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                val
+                                    ? 'Status set to On Leave'
+                                    : 'Status set to Available',
+                              ),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
