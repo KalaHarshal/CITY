@@ -7,6 +7,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'reports_page.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../l10n/app_localizations.dart';
+import 'package:video_player/video_player.dart';
 
 // Icon selection based on complaint category
 IconData getCategoryIcon(String category) {
@@ -401,8 +402,10 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
                 ),
               ),
 
-              // Photos Submitted (make images bigger to match Report Issue Page)
-              if (photos.isNotEmpty)
+              // Media Submitted (photos & videos)
+              final mediaList = (complaintData!['media'] as List<dynamic>? ?? []);
+
+              if (mediaList.isNotEmpty)
                 Container(
                   width: double.infinity,
                   margin: EdgeInsets.only(bottom: 14.h),
@@ -424,93 +427,93 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
                       ),
                       SizedBox(height: 10.h),
                       SizedBox(
-                        height: 90.h, // Match Report Issue Page
+                        height: 90.h,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          itemCount: photos.length,
+                          itemCount: mediaList.length,
                           separatorBuilder: (_, __) => SizedBox(width: 10.w),
                           itemBuilder: (context, i) {
-                            final photoUrl = photos[i];
-                            // Use the complaint's original timestamp for the photo, as in Report Issue Page
-                            final photoTimestamp = complaintData!['dateTime'];
-                            String photoTimeLabel = '';
-                            if (photoTimestamp != null &&
-                                photoTimestamp is String) {
+                            final media = mediaList[i] as Map;
+                            final isVideo = media['type'] == 'video';
+                            final url = media['url'] as String;
+                            final timestamp = media['timestamp'] as String?;
+                            String timeLabel = '';
+                            if (timestamp != null) {
                               try {
-                                final dt = DateTime.parse(photoTimestamp);
-                                photoTimeLabel = DateFormat(
-                                  'dd MMM, hh:mm a',
-                                ).format(dt);
+                                final dt = DateTime.parse(timestamp);
+                                timeLabel = DateFormat('dd MMM, hh:mm a').format(dt);
                               } catch (_) {
-                                photoTimeLabel = photoTimestamp;
+                                timeLabel = timestamp;
                               }
                             }
                             return GestureDetector(
                               onTap: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (_) => Dialog(
-                                    backgroundColor: Colors.black,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Image.network(
-                                          photoUrl,
-                                          width: 300.w,
-                                          fit: BoxFit.contain,
-                                        ),
-                                        Padding(
-                                          padding: EdgeInsets.all(8.w),
-                                          child: Text(
-                                            photoTimeLabel,
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 15.sp,
-                                            ),
-                                          ),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(),
-                                          child: Text(
-                                            loc.close,
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 14.sp,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                if (isVideo) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => Dialog(
+                                      backgroundColor: Colors.black,
+                                      child: _VideoPreviewDialog(url: url, timestamp: timeLabel),
                                     ),
-                                  ),
-                                );
+                                  );
+                                } else {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => Dialog(
+                                      backgroundColor: Colors.black,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Image.network(url, width: 300.w, fit: BoxFit.contain),
+                                          Padding(
+                                            padding: EdgeInsets.all(8.w),
+                                            child: Text(
+                                              timeLabel,
+                                              style: TextStyle(color: Colors.white, fontSize: 15.sp),
+                                            ),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.of(context).pop(),
+                                            child: Text(
+                                              loc.close,
+                                              style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }
                               },
                               child: Stack(
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(12.r),
-                                    child: Image.network(
-                                      photoUrl,
-                                      width: 90.w,
-                                      height: 90.w,
-                                      fit: BoxFit.cover,
-                                    ),
+                                    child: isVideo
+                                        ? Container(
+                                            width: 90.w,
+                                            height: 90.w,
+                                            color: Colors.black12,
+                                            child: Center(
+                                              child: Icon(Icons.videocam, color: Colors.red, size: 40.sp),
+                                            ),
+                                          )
+                                        : Image.network(
+                                            url,
+                                            width: 90.w,
+                                            height: 90.w,
+                                            fit: BoxFit.cover,
+                                          ),
                                   ),
                                   Positioned(
                                     bottom: 2.h,
                                     left: 2.w,
                                     child: Container(
                                       color: Colors.black54,
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 4.w,
-                                        vertical: 2.h,
-                                      ),
+                                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
                                       child: Text(
-                                        photoTimeLabel,
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10.sp,
-                                        ),
+                                        timeLabel,
+                                        style: TextStyle(color: Colors.white, fontSize: 10.sp),
                                       ),
                                     ),
                                   ),
@@ -966,6 +969,91 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// Video preview dialog
+class _VideoPreviewDialog extends StatefulWidget {
+  final String url;
+  final String timestamp;
+  const _VideoPreviewDialog({required this.url, required this.timestamp});
+
+  @override
+  State<_VideoPreviewDialog> createState() => _VideoPreviewDialogState();
+}
+
+class _VideoPreviewDialogState extends State<_VideoPreviewDialog> {
+  late VideoPlayerController _controller;
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.network(widget.url)
+      ..initialize().then((_) {
+        setState(() {
+          _initialized = true;
+        });
+        _controller.play();
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AspectRatio(
+          aspectRatio: _initialized ? _controller.value.aspectRatio : 16 / 9,
+          child: _initialized
+              ? VideoPlayer(_controller)
+              : Container(
+                  color: Colors.black,
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+        ),
+        Padding(
+          padding: EdgeInsets.all(8),
+          child: Text(
+            widget.timestamp,
+            style: TextStyle(color: Colors.white, fontSize: 15),
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              icon: Icon(
+                _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                setState(() {
+                  _controller.value.isPlaying
+                      ? _controller.pause()
+                      : _controller.play();
+                });
+              },
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                AppLocalizations.of(context)!.close,
+                style: TextStyle(color: Colors.white, fontSize: 14),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
