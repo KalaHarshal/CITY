@@ -160,9 +160,23 @@ class _LoginPageState extends State<LoginPage> {
                 },
               ),
               ListTile(
-                title: const Text('ᱥᱟᱱᱛᱟᱲᱤ'),
+                title: const Text('मराठी'),
                 onTap: () {
-                  localeProvider.setLocale(const Locale('sat'));
+                  localeProvider.setLocale(const Locale('mr'));
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: const Text('मराठी'),
+                onTap: () {
+                  localeProvider.setLocale(const Locale('mr'));
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: const Text('తెలుగు'),
+                onTap: () {
+                  localeProvider.setLocale(const Locale('te'));
                   Navigator.of(context).pop();
                 },
               ),
@@ -182,16 +196,32 @@ class _LoginPageState extends State<LoginPage> {
         Provider.of<LocaleProvider>(context).locale?.languageCode ?? 'en';
 
     // Adjust font sizes and button height for Hindi/Santali to avoid overflow
-    double titleFontSize = (currentLocale == 'sat' || currentLocale == 'hi')
+    double titleFontSize =
+        (currentLocale == 'sat' ||
+            currentLocale == 'hi' ||
+            currentLocale == 'mr' ||
+            currentLocale == 'te')
         ? 20.sp
         : 24.sp;
-    double subtitleFontSize = (currentLocale == 'sat' || currentLocale == 'hi')
+    double subtitleFontSize =
+        (currentLocale == 'sat' ||
+            currentLocale == 'hi' ||
+            currentLocale == 'mr' ||
+            currentLocale == 'te')
         ? 13.sp
         : 15.sp;
-    double buttonFontSize = (currentLocale == 'sat' || currentLocale == 'hi')
+    double buttonFontSize =
+        (currentLocale == 'sat' ||
+            currentLocale == 'hi' ||
+            currentLocale == 'mr' ||
+            currentLocale == 'te')
         ? 15.sp
         : 17.sp;
-    double buttonPadding = (currentLocale == 'sat' || currentLocale == 'hi')
+    double buttonPadding =
+        (currentLocale == 'sat' ||
+            currentLocale == 'hi' ||
+            currentLocale == 'mr' ||
+            currentLocale == 'te')
         ? 18.h
         : 15.h;
 
