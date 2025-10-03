@@ -140,47 +140,101 @@ class _LoginPageState extends State<LoginPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(l10n.select_language),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ListTile(
-                // Always show "English" in English
-                title: const Text('English'),
-                onTap: () {
-                  localeProvider.setLocale(const Locale('en'));
-                  Navigator.of(context).pop();
-                },
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  ListTile(
+                    // Always show "English" in English
+                    title: const Text('English'),
+                    onTap: () {
+                      localeProvider.setLocale(const Locale('en'));
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  ListTile(
+                    // Always show "हिन्दी" in Hindi
+                    title: const Text('हिन्दी'),
+                    onTap: () {
+                      localeProvider.setLocale(const Locale('hi'));
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('मराठी'),
+                    onTap: () {
+                      localeProvider.setLocale(const Locale('mr'));
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('ᱥᱟᱱᱛᱟᱲᱤ'),
+                    onTap: () {
+                      localeProvider.setLocale(const Locale('sat'));
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('తెలుగు'),
+                    onTap: () {
+                      localeProvider.setLocale(const Locale('te'));
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('ಕನ್ನಡ'),
+                    onTap: () {
+                      localeProvider.setLocale(const Locale('kn'));
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('ગુજરાતી'),
+                    onTap: () {
+                      localeProvider.setLocale(const Locale('gu'));
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('தமிழ்'),
+                    onTap: () {
+                      localeProvider.setLocale(const Locale('ta'));
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('অসমীয়া'),
+                    onTap: () {
+                      localeProvider.setLocale(const Locale('as'));
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('ਪੰਜਾਬੀ'),
+                    onTap: () {
+                      localeProvider.setLocale(const Locale('pa'));
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('বাংলা'),
+                    onTap: () {
+                      localeProvider.setLocale(const Locale('bn'));
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('മലയാളം'),
+                    onTap: () {
+                      localeProvider.setLocale(const Locale('ml'));
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
               ),
-              ListTile(
-                // Always show "हिन्दी" in Hindi
-                title: const Text('हिन्दी'),
-                onTap: () {
-                  localeProvider.setLocale(const Locale('hi'));
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                title: const Text('मराठी'),
-                onTap: () {
-                  localeProvider.setLocale(const Locale('mr'));
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                title: const Text('సంతాలి'),
-                onTap: () {
-                  localeProvider.setLocale(const Locale('sat'));
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                title: const Text('తెలుగు'),
-                onTap: () {
-                  localeProvider.setLocale(const Locale('te'));
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
+            ),
           ),
         );
       },
@@ -200,28 +254,56 @@ class _LoginPageState extends State<LoginPage> {
         (currentLocale == 'sat' ||
             currentLocale == 'hi' ||
             currentLocale == 'mr' ||
-            currentLocale == 'te')
+            currentLocale == 'te' ||
+            currentLocale == 'kn' ||
+            currentLocale == 'gu' ||
+            currentLocale == 'ta' ||
+            currentLocale == 'as' ||
+            currentLocale == 'pa' ||
+            currentLocale == 'bn' ||
+            currentLocale == 'ml')
         ? 20.sp
         : 24.sp;
     double subtitleFontSize =
         (currentLocale == 'sat' ||
             currentLocale == 'hi' ||
             currentLocale == 'mr' ||
-            currentLocale == 'te')
+            currentLocale == 'te' ||
+            currentLocale == 'kn' ||
+            currentLocale == 'gu' ||
+            currentLocale == 'ta' ||
+            currentLocale == 'as' ||
+            currentLocale == 'pa' ||
+            currentLocale == 'bn' ||
+            currentLocale == 'ml')
         ? 13.sp
         : 15.sp;
     double buttonFontSize =
         (currentLocale == 'sat' ||
             currentLocale == 'hi' ||
             currentLocale == 'mr' ||
-            currentLocale == 'te')
+            currentLocale == 'te' ||
+            currentLocale == 'kn' ||
+            currentLocale == 'gu' ||
+            currentLocale == 'ta' ||
+            currentLocale == 'as' ||
+            currentLocale == 'pa' ||
+            currentLocale == 'bn' ||
+            currentLocale == 'ml')
         ? 15.sp
         : 17.sp;
     double buttonPadding =
         (currentLocale == 'sat' ||
             currentLocale == 'hi' ||
             currentLocale == 'mr' ||
-            currentLocale == 'te')
+            currentLocale == 'te' ||
+            currentLocale == 'kn' ||
+            currentLocale == 'gu' ||
+            currentLocale == 'ta' ||
+            currentLocale == 'as' ||
+            currentLocale == 'pa' ||
+            currentLocale == 'bn' ||
+            currentLocale == 'ml')
         ? 18.h
         : 15.h;
 

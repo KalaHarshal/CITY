@@ -18,6 +18,27 @@ class AppLocalizationsMr extends AppLocalizations {
   String get marathi => 'Marathi';
 
   @override
+  String get tamil => 'Tamil';
+
+  @override
+  String get kannada => 'Kannada';
+
+  @override
+  String get bengali => 'Bengali';
+
+  @override
+  String get malayalam => 'Malayalam';
+
+  @override
+  String get punjabi => 'Punjabi';
+
+  @override
+  String get gujarati => 'Gujarati';
+
+  @override
+  String get assamese => 'Assamese';
+
+  @override
   String get app_title => 'स्मार्ट सिविक पोर्टल';
 
   @override

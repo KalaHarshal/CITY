@@ -5,10 +5,17 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
+import 'app_localizations_as.dart';
+import 'app_localizations_bn.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_gu.dart';
 import 'app_localizations_hi.dart';
+import 'app_localizations_kn.dart';
+import 'app_localizations_ml.dart';
 import 'app_localizations_mr.dart';
+import 'app_localizations_pa.dart';
 import 'app_localizations_sat.dart';
+import 'app_localizations_ta.dart';
 import 'app_localizations_te.dart';
 
 // ignore_for_file: type=lint
@@ -102,6 +109,13 @@ abstract class AppLocalizations {
     Locale('sat'),
     Locale('mr'),
     Locale('te'),
+    Locale('kn'),
+    Locale('gu'),
+    Locale('ta'),
+    Locale('as'),
+    Locale('pa'),
+    Locale('bn'),
+    Locale('ml'),
   ];
 
   /// No description provided for @santhali.
@@ -121,6 +135,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Marathi'**
   String get marathi;
+
+  /// No description provided for @tamil.
+  ///
+  /// In en, this message translates to:
+  /// **'Tamil'**
+  String get tamil;
+
+  /// No description provided for @kannada.
+  ///
+  /// In en, this message translates to:
+  /// **'Kannada'**
+  String get kannada;
+
+  /// No description provided for @bengali.
+  ///
+  /// In en, this message translates to:
+  /// **'Bengali'**
+  String get bengali;
+
+  /// No description provided for @malayalam.
+  ///
+  /// In en, this message translates to:
+  /// **'Malayalam'**
+  String get malayalam;
+
+  /// No description provided for @punjabi.
+  ///
+  /// In en, this message translates to:
+  /// **'Punjabi'**
+  String get punjabi;
+
+  /// No description provided for @gujarati.
+  ///
+  /// In en, this message translates to:
+  /// **'Gujarati'**
+  String get gujarati;
+
+  /// No description provided for @assamese.
+  ///
+  /// In en, this message translates to:
+  /// **'Assamese'**
+  String get assamese;
 
   /// No description provided for @app_title.
   ///
@@ -1471,8 +1527,20 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['en', 'hi', 'mr', 'sat', 'te'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>[
+    'as',
+    'bn',
+    'en',
+    'gu',
+    'hi',
+    'kn',
+    'ml',
+    'mr',
+    'pa',
+    'sat',
+    'ta',
+    'te',
+  ].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -1481,14 +1549,28 @@ class _AppLocalizationsDelegate
 AppLocalizations lookupAppLocalizations(Locale locale) {
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
+    case 'as':
+      return AppLocalizationsAs();
+    case 'bn':
+      return AppLocalizationsBn();
     case 'en':
       return AppLocalizationsEn();
+    case 'gu':
+      return AppLocalizationsGu();
     case 'hi':
       return AppLocalizationsHi();
+    case 'kn':
+      return AppLocalizationsKn();
+    case 'ml':
+      return AppLocalizationsMl();
     case 'mr':
       return AppLocalizationsMr();
+    case 'pa':
+      return AppLocalizationsPa();
     case 'sat':
       return AppLocalizationsSat();
+    case 'ta':
+      return AppLocalizationsTa();
     case 'te':
       return AppLocalizationsTe();
   }

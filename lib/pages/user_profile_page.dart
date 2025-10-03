@@ -601,6 +601,20 @@ class _UserProfilePageState extends State<UserProfilePage> {
           return loc.telugu;
         case 'mr':
           return loc.marathi;
+        case 'kn':
+          return loc.kannada;
+        case 'gu':
+          return loc.gujarati;
+        case 'ta':
+          return loc.tamil;
+        case 'as':
+          return loc.assamese;
+        case 'pa':
+          return loc.punjabi;
+        case 'bn':
+          return loc.bengali;
+        case 'ml':
+          return loc.malayalam;
         case 'en':
         default:
           return loc.english;
@@ -762,47 +776,102 @@ class _UserProfilePageState extends State<UserProfilePage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(loc.select_language),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('English'),
-              onTap: () {
-                localeProvider.setLocale(const Locale('en'));
-                Navigator.of(context).pop();
-              },
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  // Always show "English" in English
+                  title: const Text('English'),
+                  onTap: () {
+                    localeProvider.setLocale(const Locale('en'));
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  // Always show "हिन्दी" in Hindi
+                  title: const Text('हिन्दी'),
+                  onTap: () {
+                    localeProvider.setLocale(const Locale('hi'));
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  title: const Text('मराठी'),
+                  onTap: () {
+                    localeProvider.setLocale(const Locale('mr'));
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  title: const Text('ᱥᱟᱱᱛᱟᱲᱤ'),
+                  onTap: () {
+                    localeProvider.setLocale(const Locale('sat'));
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  title: const Text('తెలుగు'),
+                  onTap: () {
+                    localeProvider.setLocale(const Locale('te'));
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  title: const Text('ಕನ್ನಡ'),
+                  onTap: () {
+                    localeProvider.setLocale(const Locale('kn'));
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  title: const Text('ગુજરાતી'),
+                  onTap: () {
+                    localeProvider.setLocale(const Locale('gu'));
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  title: const Text('தமிழ்'),
+                  onTap: () {
+                    localeProvider.setLocale(const Locale('ta'));
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  title: const Text('অসমীয়া'),
+                  onTap: () {
+                    localeProvider.setLocale(const Locale('as'));
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  title: const Text('ਪੰਜਾਬੀ'),
+                  onTap: () {
+                    localeProvider.setLocale(const Locale('pa'));
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  title: const Text('বাংলা'),
+                  onTap: () {
+                    localeProvider.setLocale(const Locale('bn'));
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  title: const Text('മലയാളം'),
+                  onTap: () {
+                    localeProvider.setLocale(const Locale('ml'));
+                    Navigator.of(context).pop();
+                  },
+                ),
+                // END: ADDED SANTALI OPTION
+              ],
             ),
-            ListTile(
-              title: const Text('हिन्दी'),
-              onTap: () {
-                localeProvider.setLocale(const Locale('hi'));
-                Navigator.of(context).pop();
-              },
-            ),
-            ListTile(
-              title: const Text('मराठी'),
-              onTap: () {
-                localeProvider.setLocale(const Locale('mr'));
-                Navigator.of(context).pop();
-              },
-            ),
-            ListTile(
-              title: const Text('తెలుగు'),
-              onTap: () {
-                localeProvider.setLocale(const Locale('te'));
-                Navigator.of(context).pop();
-              },
-            ),
-            // START: ADDED SANTALI OPTION
-            ListTile(
-              title: const Text('ᱥᱟᱱᱛᱟᱲᱤ'),
-              onTap: () {
-                localeProvider.setLocale(const Locale('sat'));
-                Navigator.of(context).pop();
-              },
-            ),
-            // END: ADDED SANTALI OPTION
-          ],
+          ),
         ),
       ),
     );
