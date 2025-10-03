@@ -430,17 +430,11 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
 
       File fileToUpload = media.file;
 
-      if (media.isVideo) {
-        // Compress video before upload
-        final info = await VideoCompress.compressVideo(
-          media.file.path,
-          quality: VideoQuality.MediumQuality,
-          deleteOrigin: false,
-        );
-        if (info != null && info.file != null) {
-          fileToUpload = info.file!;
-        }
-      }
+      // Only compress images
+      // No video compression
+      // if (media.isVideo) {
+      //   // Video compression removed
+      // }
 
       final uploadTask = await ref.putFile(fileToUpload);
       final url = await uploadTask.ref.getDownloadURL();
