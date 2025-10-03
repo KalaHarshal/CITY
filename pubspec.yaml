@@ -31,11 +31,13 @@ dependencies:
   firebase_messaging: ^16.0.1
   timeago: ^3.6.1
 
+
   flutter_localizations:
     sdk: flutter
   intl: ^0.20.2
   provider: ^6.1.5+1
   shared_preferences: ^2.5.3
+  video_player: ^2.10.0
 
 
 dev_dependencies:

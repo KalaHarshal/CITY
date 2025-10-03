@@ -19,11 +19,17 @@ import 'submitted_page.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
+import 'package:video_player/video_player.dart'; // Add this import
 
-class _PhotoWithTimestamp {
+class _MediaWithTimestamp {
   final File file;
   final DateTime timestamp;
-  _PhotoWithTimestamp({required this.file, required this.timestamp});
+  final bool isVideo;
+  _MediaWithTimestamp({
+    required this.file,
+    required this.timestamp,
+    required this.isVideo,
+  });
 }
 
 class ReportIssuePage extends StatefulWidget {
@@ -39,7 +45,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
   String? selectedCategory;
   String? selectedSubcategory;
   String? customSubcategory;
-  List<_PhotoWithTimestamp> photos = [];
+  List<_MediaWithTimestamp> mediaSlots = [];
   String? location;
   String? gps;
   String? address;
@@ -100,7 +106,6 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
         categoryMap.keys.contains(widget.prefilledCategory)) {
       selectedCategory = widget.prefilledCategory;
     }
-    // Use post-frame callback to ensure context is ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _requestAndFetchLocation();
     });
@@ -213,21 +218,76 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     }
   }
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 60,
+  Future<void> _pickMedia(int slot) async {
+    final action = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text('Choose Option'),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 'photo'),
+            child: Row(
+              children: [
+                Icon(Icons.camera_alt, color: Colors.blue),
+                SizedBox(width: 8),
+                Text('Capture Photo'),
+              ],
+            ),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 'video'),
+            child: Row(
+              children: [
+                Icon(Icons.videocam, color: Colors.red),
+                SizedBox(width: 8),
+                Text('Capture Video'),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
-    if (picked != null) {
-      File? compressed = await _compressImage(File(picked.path));
-      setState(() {
-        if (photos.length < 3 && compressed != null) {
-          photos.add(
-            _PhotoWithTimestamp(file: compressed, timestamp: DateTime.now()),
-          );
+    if (action == 'photo') {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 60,
+      );
+      if (picked != null) {
+        File? compressed = await _compressImage(File(picked.path));
+        if (compressed != null) {
+          setState(() {
+            if (mediaSlots.length < 3) {
+              mediaSlots.add(
+                _MediaWithTimestamp(
+                  file: compressed,
+                  timestamp: DateTime.now(),
+                  isVideo: false,
+                ),
+              );
+            }
+          });
         }
-      });
+      }
+    } else if (action == 'video') {
+      final picker = ImagePicker();
+      final picked = await picker.pickVideo(
+        source: ImageSource.camera,
+        maxDuration: const Duration(seconds: 30),
+      );
+      if (picked != null) {
+        setState(() {
+          if (mediaSlots.length < 3) {
+            mediaSlots.add(
+              _MediaWithTimestamp(
+                file: File(picked.path),
+                timestamp: DateTime.now(),
+                isVideo: true,
+              ),
+            );
+          }
+        });
+      }
     }
   }
 
@@ -295,34 +355,46 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     });
   }
 
-  void _showImagePreview(_PhotoWithTimestamp photo) {
-    final loc = AppLocalizations.of(context)!;
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.black,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.file(photo.file),
-            Padding(
-              padding: EdgeInsets.all(8.w),
-              child: Text(
-                DateFormat('dd MMM yyyy, hh:mm a').format(photo.timestamp),
-                style: TextStyle(color: Colors.white, fontSize: 15.sp),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                loc.close,
-                style: TextStyle(color: Colors.white, fontSize: 14.sp),
-              ),
-            ),
-          ],
+  void _showMediaPreview(_MediaWithTimestamp media) {
+    if (media.isVideo) {
+      showDialog(
+        context: context,
+        builder: (_) => Dialog(
+          backgroundColor: Colors.black,
+          child: _VideoPreviewDialog(
+            file: media.file,
+            timestamp: media.timestamp,
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (_) => Dialog(
+          backgroundColor: Colors.black,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.file(media.file),
+              Padding(
+                padding: EdgeInsets.all(8.w),
+                child: Text(
+                  DateFormat('dd MMM yyyy, hh:mm a').format(media.timestamp),
+                  style: TextStyle(color: Colors.white, fontSize: 15.sp),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  AppLocalizations.of(context)!.close,
+                  style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 
   bool get _isCategoryRequired => widget.prefilledCategory == null;
@@ -333,28 +405,36 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
       selectedSubcategory!.isNotEmpty &&
       (!_isOtherSelected ||
           (customSubcategoryController.text.trim().isNotEmpty)) &&
-      photos.isNotEmpty &&
+      mediaSlots.isNotEmpty &&
       address != null &&
       address!.isNotEmpty &&
       address != AppLocalizations.of(context)!.addressNotFound;
 
-  // Upload images to Firebase Storage with timestamp in filename
-  Future<List<String>> _uploadPhotosToStorage(String complaintId) async {
+  // Upload media (photo/video) to Firebase Storage
+  Future<List<Map<String, dynamic>>> _uploadMediaToStorage(
+    String complaintId,
+  ) async {
     final storageRef = FirebaseStorage.instance.ref();
-    List<String> photoUrls = [];
-    for (var i = 0; i < photos.length; i++) {
-      final photo = photos[i];
-      final timestampStr = photo.timestamp.toIso8601String().replaceAll(
+    List<Map<String, dynamic>> mediaUrls = [];
+    for (var i = 0; i < mediaSlots.length; i++) {
+      final media = mediaSlots[i];
+      final timestampStr = media.timestamp.toIso8601String().replaceAll(
         ':',
         '-',
       );
-      final fileName = 'photo_${i + 1}_$timestampStr.jpg';
+      final ext = media.isVideo ? 'mp4' : 'jpg';
+      final type = media.isVideo ? 'video' : 'photo';
+      final fileName = '${type}_${i + 1}_$timestampStr.$ext';
       final ref = storageRef.child('complaints/$complaintId/$fileName');
-      final uploadTask = await ref.putFile(photo.file);
+      final uploadTask = await ref.putFile(media.file);
       final url = await uploadTask.ref.getDownloadURL();
-      photoUrls.add(url);
+      mediaUrls.add({
+        'type': type,
+        'url': url,
+        'timestamp': media.timestamp.toIso8601String(),
+      });
     }
-    return photoUrls;
+    return mediaUrls;
   }
 
   // Upload audio to Firebase Storage (optional)
@@ -400,8 +480,8 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
           FirebaseAuth.instance.currentUser?.phoneNumber ?? "unknown";
       final complaintId = await _generateComplaintId(selectedCategory!);
 
-      // Upload images and audio
-      final photoUrls = await _uploadPhotosToStorage(complaintId);
+      // Upload media and audio
+      final mediaInfo = await _uploadMediaToStorage(complaintId);
       final audioUrl = await _uploadAudioToStorage(complaintId);
 
       // Prepare complaint data
@@ -417,7 +497,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
             ? customSubcategoryController.text.trim()
             : selectedSubcategory,
         "description": detailsController.text.trim(),
-        "photos": photoUrls,
+        "media": mediaInfo,
         "voiceNote": audioUrl,
         "location": address,
         "gps": gps,
@@ -434,7 +514,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
           .child(phoneNumber)
           .child('complaints')
           .child(complaintId)
-          .set(true); // or .set(null) to just create the key
+          .set(true);
 
       // Store the full complaint data under the global complaints node
       await dbRef.child('complaints').child(complaintId).set(complaintData);
@@ -473,9 +553,9 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
         backgroundColor: Colors.white,
         extendBodyBehindAppBar: true,
         appBar: AppBar(
-          backgroundColor: mainBlue, // Changed from mainBlue to white
+          backgroundColor: mainBlue,
           elevation: 0,
-          automaticallyImplyLeading: false, // Removes the back button
+          automaticallyImplyLeading: false,
           title: Text(
             loc.reportIssue,
             style: TextStyle(
@@ -506,10 +586,9 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                     ),
                     SizedBox(height: 8.h),
                     SizedBox(
-                      // FIX: Enforce fixed height to prevent vertical jumping
                       height: 55.h,
                       child: DropdownButtonFormField<String>(
-                        initialValue: selectedCategory,
+                        value: selectedCategory,
                         hint: Text(
                           loc.selectCategoryHint,
                           style: TextStyle(fontSize: 14.sp),
@@ -574,10 +653,9 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                     ),
                     SizedBox(height: 8.h),
                     SizedBox(
-                      // FIX: Enforce fixed height to prevent vertical jumping
                       height: 55.h,
                       child: DropdownButtonFormField<String>(
-                        initialValue: selectedSubcategory,
+                        value: selectedSubcategory,
                         hint: Text(
                           loc.subcategoryHint,
                           style: TextStyle(fontSize: 14.sp),
@@ -670,20 +748,33 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                         itemCount: 3,
                         separatorBuilder: (_, __) => SizedBox(width: 10.w),
                         itemBuilder: (context, i) {
-                          if (i < photos.length) {
-                            final photo = photos[i];
+                          if (i < mediaSlots.length) {
+                            final media = mediaSlots[i];
                             return GestureDetector(
-                              onTap: () => _showImagePreview(photo),
+                              onTap: () => _showMediaPreview(media),
                               child: Stack(
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(12.r),
-                                    child: Image.file(
-                                      photo.file,
-                                      width: 90.w,
-                                      height: 90.w,
-                                      fit: BoxFit.cover,
-                                    ),
+                                    child: media.isVideo
+                                        ? Container(
+                                            width: 90.w,
+                                            height: 90.w,
+                                            color: Colors.black12,
+                                            child: Center(
+                                              child: Icon(
+                                                Icons.videocam,
+                                                color: Colors.red,
+                                                size: 40.sp,
+                                              ),
+                                            ),
+                                          )
+                                        : Image.file(
+                                            media.file,
+                                            width: 90.w,
+                                            height: 90.w,
+                                            fit: BoxFit.cover,
+                                          ),
                                   ),
                                   Positioned(
                                     bottom: 2.h,
@@ -697,7 +788,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                                       child: Text(
                                         DateFormat(
                                           'dd MMM, hh:mm a',
-                                        ).format(photo.timestamp),
+                                        ).format(media.timestamp),
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 10.sp,
@@ -710,8 +801,9 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                                     top: 2.h,
                                     right: 2.w,
                                     child: GestureDetector(
-                                      onTap: () =>
-                                          setState(() => photos.removeAt(i)),
+                                      onTap: () => setState(
+                                        () => mediaSlots.removeAt(i),
+                                      ),
                                       child: Container(
                                         decoration: BoxDecoration(
                                           color: Colors.red,
@@ -730,7 +822,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                             );
                           } else {
                             return GestureDetector(
-                              onTap: _pickImage,
+                              onTap: () => _pickMedia(i),
                               child: Container(
                                 width: 90.w,
                                 height: 90.w,
@@ -741,10 +833,21 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                                   borderRadius: BorderRadius.circular(12.r),
                                   color: Colors.grey.shade100,
                                 ),
-                                child: Icon(
-                                  Icons.camera_alt,
-                                  color: Colors.grey,
-                                  size: 32.sp,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.camera_alt,
+                                      color: Colors.grey,
+                                      size: 28.sp,
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    Icon(
+                                      Icons.videocam,
+                                      color: Colors.red,
+                                      size: 24.sp,
+                                    ),
+                                  ],
                                 ),
                               ),
                             );
@@ -1063,7 +1166,6 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                 showUnselectedLabels: true,
                 onTap: (index) {
                   if (index == 0) {
-                    // Use Provider to get the user's name
                     final fullName = Provider.of<UserProvider>(
                       context,
                       listen: false,
@@ -1159,6 +1261,88 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _VideoPreviewDialog extends StatefulWidget {
+  final File file;
+  final DateTime timestamp;
+  const _VideoPreviewDialog({required this.file, required this.timestamp});
+
+  @override
+  State<_VideoPreviewDialog> createState() => _VideoPreviewDialogState();
+}
+
+class _VideoPreviewDialogState extends State<_VideoPreviewDialog> {
+  late VideoPlayerController _controller;
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.file(widget.file)
+      ..initialize().then((_) {
+        setState(() {
+          _initialized = true;
+        });
+        _controller.play();
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AspectRatio(
+          aspectRatio: _initialized ? _controller.value.aspectRatio : 16 / 9,
+          child: _initialized
+              ? VideoPlayer(_controller)
+              : Container(
+                  color: Colors.black,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+        ),
+        Padding(
+          padding: EdgeInsets.all(8.w),
+          child: Text(
+            DateFormat('dd MMM yyyy, hh:mm a').format(widget.timestamp),
+            style: TextStyle(color: Colors.white, fontSize: 15.sp),
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              icon: Icon(
+                _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                setState(() {
+                  _controller.value.isPlaying
+                      ? _controller.pause()
+                      : _controller.play();
+                });
+              },
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                AppLocalizations.of(context)!.close,
+                style: TextStyle(color: Colors.white, fontSize: 14.sp),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
